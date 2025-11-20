@@ -6,6 +6,7 @@ import BackButton from '../../components/BackButton';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { deliverVoorwerp } from '@/lib/actions/voorwerpen';
 
 export default function DeliverItemPage() {
   const router = useRouter();
@@ -19,24 +20,16 @@ export default function DeliverItemPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/voorwerpen/deliver', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ voorwerpNummer: trackingNumber }),
-      });
+      const result = await deliverVoorwerp(trackingNumber);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Er is een fout opgetreden');
+      if (!result.success) {
+        setError(result.error || 'Er is een fout opgetreden');
         setIsLoading(false);
         return;
       }
 
       // Success - redirect with the item data
-      localStorage.setItem('deliveredItem', JSON.stringify(data.voorwerp));
+      localStorage.setItem('deliveredItem', JSON.stringify(result.voorwerp));
       router.push('/counter/deliver/confirm');
     } catch (err) {
       console.error('Deliver error:', err);

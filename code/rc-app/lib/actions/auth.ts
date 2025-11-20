@@ -1,16 +1,25 @@
-import { NextResponse } from 'next/server'
+'use server'
+
 import prisma from '@/lib/prisma'
 
-export async function POST(request: Request) {
+export async function logoutAction(sessionId: number) {
   try {
-    const body = await request.json()
-    const { username, password } = body
+    // Delete the session from database
+    await prisma.sessie.delete({
+      where: { sessieId: sessionId },
+    })
 
+    return { success: true }
+  } catch (error) {
+    console.error('Logout error:', error)
+    return { success: false, error: 'Er is een fout opgetreden tijdens het uitloggen' }
+  }
+}
+
+export async function loginAction(username: string, password: string) {
+  try {
     if (!username || !password) {
-      return NextResponse.json(
-        { error: 'Gebruikersnaam en wachtwoord zijn verplicht' },
-        { status: 400 }
-      )
+      return { success: false, error: 'Gebruikersnaam en wachtwoord zijn verplicht' }
     }
 
     // Find user by username
@@ -20,18 +29,12 @@ export async function POST(request: Request) {
     })
 
     if (!gebruiker) {
-      return NextResponse.json(
-        { error: 'Ongeldige gebruikersnaam of wachtwoord' },
-        { status: 401 }
-      )
+      return { success: false, error: 'Ongeldige gebruikersnaam of wachtwoord' }
     }
 
     // Check password (in production, use bcrypt.compare)
     if (gebruiker.wachtwoord !== password) {
-      return NextResponse.json(
-        { error: 'Ongeldige gebruikersnaam of wachtwoord' },
-        { status: 401 }
-      )
+      return { success: false, error: 'Ongeldige gebruikersnaam of wachtwoord' }
     }
 
     // Create session
@@ -45,16 +48,13 @@ export async function POST(request: Request) {
     // Return user info without password
     const { wachtwoord, ...userWithoutPassword } = gebruiker
 
-    return NextResponse.json({
+    return {
       success: true,
       user: userWithoutPassword,
       sessionId: session.sessieId,
-    })
+    }
   } catch (error) {
     console.error('Login error:', error)
-    return NextResponse.json(
-      { error: 'Er is een fout opgetreden tijdens het inloggen' },
-      { status: 500 }
-    )
+    return { success: false, error: 'Er is een fout opgetreden tijdens het inloggen' }
   }
 }

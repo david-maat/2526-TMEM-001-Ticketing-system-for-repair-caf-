@@ -6,6 +6,7 @@ import BackButton from '@/app/components/BackButton';
 import Button from '@/app/components/Button';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { VoorwerpFull } from '@/lib/types';
+import { updateVoorwerp } from '@/lib/actions/voorwerpen';
 
 export default function HandleVoorwerpPage() {
   const params = useParams();
@@ -24,6 +25,7 @@ export default function HandleVoorwerpPage() {
 
   const fetchVoorwerp = async () => {
     try {
+      // Keep API route for now since we need it for client-side fetching
       const response = await fetch(`/api/voorwerpen/${voorwerpNummer}`);
       
       if (!response.ok) {
@@ -49,21 +51,14 @@ export default function HandleVoorwerpPage() {
 
   const updateStatus = async (statusId: number) => {
     try {
-      const response = await fetch(`/api/voorwerpen/${voorwerpNummer}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          voorwerpStatusId: statusId,
-          ...(statusId === 2 && { startingDuur: new Date() }),
-          ...(statusId === 3 && { klaarDuur: new Date() }),
-        }),
+      const result = await updateVoorwerp(voorwerpNummer, {
+        voorwerpStatusId: statusId,
+        ...(statusId === 2 && { startingDuur: new Date() }),
+        ...(statusId === 3 && { klaarDuur: new Date() }),
       });
 
-      if (response.ok) {
-        const updatedVoorwerp = await response.json();
-        setVoorwerp(updatedVoorwerp);
+      if (result.success && result.voorwerp) {
+        setVoorwerp(result.voorwerp);
       }
     } catch (err) {
       console.error('Error updating status:', err);

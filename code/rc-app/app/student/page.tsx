@@ -22,6 +22,7 @@ export default function StudentPage() {
     setIsLoading(true);
 
     try {
+      // Keep API route for client-side validation
       const response = await fetch(`/api/voorwerpen/${trackingNumber}`);
       
       if (!response.ok) {

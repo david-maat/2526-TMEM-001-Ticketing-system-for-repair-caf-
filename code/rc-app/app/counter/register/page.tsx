@@ -7,6 +7,7 @@ import Input from '../../components/Input';
 import Dropdown from '../../components/Dropdown';
 import Button from '../../components/Button';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { registerVoorwerp } from '@/lib/actions/voorwerpen';
 
 export default function RegisterItemPage() {
   const router = useRouter();
@@ -28,11 +29,11 @@ export default function RegisterItemPage() {
   ];
 
   useEffect(() => {
-    // Fetch departments from API
+    // Fetch departments using server action
     const fetchDepartments = async () => {
       try {
-        const response = await fetch('/api/afdelingen');
-        const data = await response.json();
+        const { getAfdelingenForClient } = await import('@/lib/actions/afdelingen');
+        const data = await getAfdelingenForClient();
         const deptOptions = data.map((dept: any) => ({
           value: dept.afdelingId.toString(),
           label: dept.naam
@@ -54,25 +55,19 @@ export default function RegisterItemPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/voorwerpen/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await registerVoorwerp(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Er is een fout opgetreden');
+      if (!result.success) {
+        setError(result.error || 'Er is een fout opgetreden');
         setIsLoading(false);
         return;
       }
 
       // Success - redirect with tracking number
-      localStorage.setItem('registeredItem', JSON.stringify(data.voorwerp));
-      localStorage.setItem('trackingNumber', data.trackingNumber);
+      localStorage.setItem('registeredItem', JSON.stringify(result.voorwerp));
+      if (result.trackingNumber) {
+        localStorage.setItem('trackingNumber', result.trackingNumber);
+      }
       router.push('/counter');
     } catch (err) {
       console.error('Register error:', err);

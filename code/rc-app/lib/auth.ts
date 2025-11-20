@@ -32,13 +32,8 @@ export async function logout() {
   
   if (sessionId) {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId }),
-      });
+      const { logoutAction } = await import('@/lib/actions/auth');
+      await logoutAction(sessionId);
     } catch (error) {
       console.error('Logout error:', error);
     }

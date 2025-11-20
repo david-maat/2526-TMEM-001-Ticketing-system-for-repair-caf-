@@ -1,19 +1,17 @@
-import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { cache } from 'react'
 
-export async function GET() {
+// GET all afdelingen - cached for request deduplication
+export const getAfdelingen = cache(async () => {
   try {
     const afdelingen = await prisma.afdeling.findMany({
       orderBy: {
         naam: 'asc',
       },
     })
-    return NextResponse.json(afdelingen)
+    return afdelingen
   } catch (error) {
     console.error('Error fetching afdelingen:', error)
-    return NextResponse.json(
-      { error: 'Er is een fout opgetreden' },
-      { status: 500 }
-    )
+    throw new Error('Er is een fout opgetreden')
   }
-}
+})

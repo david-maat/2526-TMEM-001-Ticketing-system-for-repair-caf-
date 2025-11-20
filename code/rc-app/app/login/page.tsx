@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { loginAction } from '@/lib/actions/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,28 +19,20 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const result = await loginAction(username, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Inloggen mislukt');
+      if (!result.success) {
+        setError(result.error || 'Inloggen mislukt');
         setIsLoading(false);
         return;
       }
 
       // Store session info in localStorage
-      localStorage.setItem('sessionId', data.sessionId);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('sessionId', result.sessionId!.toString());
+      localStorage.setItem('user', JSON.stringify(result.user));
 
       // Redirect based on user type
-      const userType = data.user.gebruikerType.typeNaam;
+      const userType = result.user!.gebruikerType.typeNaam;
       
       if (userType === 'Admin') {
         router.push('/admin');
