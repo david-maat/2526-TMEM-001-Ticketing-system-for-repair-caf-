@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GebruikerType {
+  gebruikerTypeId Int        @id @default(autoincrement())
+  typeNaam        String
+  gebruikers      Gebruiker[]
+}
+
+model Gebruiker {
+  gebruikerId     Int             @id @default(autoincrement())
+  gebruikerNaam   String          @unique
+  naam            String
+  wachtwoord      String
+  gebruikerTypeId Int
+  gebruikerType   GebruikerType   @relation(fields: [gebruikerTypeId], references: [gebruikerTypeId])
+  sessies         Sessie[]
+  qrLogins        QRLogin[]
+}
+
+model Sessie {
+  sessieId      Int       @id @default(autoincrement())
+  startTijd     DateTime  @default(now())
+  vervalTijd    DateTime
+  gebruikerId   Int
+  gebruiker     Gebruiker @relation(fields: [gebruikerId], references: [gebruikerId])
+}
+
+model QRLogin {
+  qrLoginId     Int       @id @default(autoincrement())
+  token         String    @unique
+  vervalTijd    DateTime
+  isGebruiktTijd DateTime?
+  gebruikerId   Int
+  gebruiker     Gebruiker @relation(fields: [gebruikerId], references: [gebruikerId])
+}
+
+model Cafe {
+  cafeId      Int              @id @default(autoincrement())
+  cafePatroon String
+  naam        String
+  locatie     String
+  cafedagen   Cafedag[]
+  cafeGebruikers CafeGebruiker[]
+}
+
+model Cafedag {
+  cafedagId       Int             @id @default(autoincrement())
+  cafeId          Int
+  startDatum      DateTime
+  eindDatum       DateTime
+  cafe            Cafe            @relation(fields: [cafeId], references: [cafeId])
+  cafedagVoorwerp Cafedagvoorwerp[]
+}
+
+model CafeGebruiker {
+  cafeGebruikerId Int    @id @default(autoincrement())
+  gebruikerId     Int
+  cafeId          Int
+  cafe            Cafe   @relation(fields: [cafeId], references: [cafeId])
+}
+
+model KlantType {
+  klantTypeId Int     @id @default(autoincrement())
+  naam        String
+  klanten     Klant[]
+}
+
+model Klant {
+  klantId       Int       @id @default(autoincrement())
+  klantTypeId   Int
+  klantnaam     String
+  telNummer     String?
+  klantType     KlantType @relation(fields: [klantTypeId], references: [klantTypeId])
+  voorwerpen    Voorwerp[]
+}
+
+model Cafedagvoorwerp {
+  cafedagVoorwerpId Int      @id @default(autoincrement())
+  cafedagId         Int
+  voorwerpId        Int
+  cafedag           Cafedag  @relation(fields: [cafedagId], references: [cafedagId])
+  voorwerp          Voorwerp @relation(fields: [voorwerpId], references: [voorwerpId])
+
+  @@unique([cafedagId, voorwerpId])
+}
+
+model Voorwerp {
+  voorwerpId          Int                  @id @default(autoincrement())
+  voorwerpNummer      String               @unique
+  klantId             Int
+  aanmeldingsDuur     DateTime
+  startingDuur        DateTime?
+  klaarDuur           DateTime?
+  klantProcedureNr    String?
+  voorwerpStatusId    Int
+  afdelingId          Int
+  beschrijving        String?
+  klant               Klant                @relation(fields: [klantId], references: [klantId])
+  voorwerpStatus      VoorwerpStatus       @relation(fields: [voorwerpStatusId], references: [voorwerpStatusId])
+  afdeling            Afdeling             @relation(fields: [afdelingId], references: [afdelingId])
+  cafedagVoorwerp     Cafedagvoorwerp[]
+  gebruikteMaterialen GebruikteMateriaal[]
+}
+
+model VoorwerpStatus {
+  voorwerpStatusId Int        @id @default(autoincrement())
+  naam             String
+  voorwerpen       Voorwerp[]
+}
+
+model Afdeling {
+  afdelingId Int        @id @default(autoincrement())
+  naam       String
+  voorwerpen Voorwerp[]
+}
+
+model GebruikteMateriaal {
+  gebruikteMateriaalId Int       @id @default(autoincrement())
+  materiaalId          Int
+  voorwerpId           Int
+  aantal               Int
+  materiaal            Materiaal @relation(fields: [materiaalId], references: [materiaalId])
+  voorwerp             Voorwerp  @relation(fields: [voorwerpId], references: [voorwerpId])
+}
+
+model Materiaal {
+  materiaalId         Int                  @id @default(autoincrement())
+  naam                String
+  gebruikteMaterialen GebruikteMateriaal[]
+}

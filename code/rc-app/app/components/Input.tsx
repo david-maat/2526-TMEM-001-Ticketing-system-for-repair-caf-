@@ -10,6 +10,7 @@ interface InputProps {
   multiline?: boolean;
   rows?: number;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function Input({
@@ -21,7 +22,8 @@ export default function Input({
   onChange,
   multiline = false,
   rows = 1,
-  className = ''
+  className = '',
+  disabled = false
 }: InputProps) {
   const inputClasses = 'w-full px-1 py-0.5 rounded-md bg-white text-xs text-black placeholder:text-black/50 border-none focus:outline-none focus:ring-2 focus:ring-[#ED5028]';
 
@@ -42,12 +44,14 @@ export default function Input({
           value={value}
           onChange={onChange}
           rows={rows}
+          disabled={disabled}
           className={inputClasses}
         />
       ) : (
         <input
           type={type}
           placeholder={placeholder}
+          disabled={disabled}
           required={required}
           value={value}
           onChange={onChange}

@@ -1,23 +1,50 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function StudentPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleScanQR = () => {
     console.log('Scanning QR code...');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Treating item:', trackingNumber);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/voorwerpen/${trackingNumber}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError('Voorwerp niet gevonden');
+        } else {
+          setError('Er is een fout opgetreden');
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      const voorwerp = await response.json();
+      router.push(`/student/handle/${trackingNumber}`);
+    } catch (err) {
+      setError('Er is een fout opgetreden');
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#03091C] flex items-center justify-center p-9">
+    <ProtectedRoute allowedRoles={['Admin', 'Student']}>
+      <div className="min-h-screen bg-[#03091C] flex items-center justify-center p-9">
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* QR Code Section */}
         <div className="flex items-center gap-2.5">
@@ -48,11 +75,15 @@ export default function StudentPage() {
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
           />
-          <Button variant="primary" type="submit" className="mt-2">
-            Voorwerp behandelen
+          {error && (
+            <div className="text-red-500 text-sm mt-2">{error}</div>
+          )}
+          <Button variant="primary" type="submit" className="mt-2" disabled={isLoading}>
+            {isLoading ? 'Bezig...' : 'Voorwerp behandelen'}
           </Button>
         </form>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

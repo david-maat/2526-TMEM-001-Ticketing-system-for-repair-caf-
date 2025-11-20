@@ -1,16 +1,60 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Input from '../components/Input';
 import Button from '../components/Button';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { username, password });
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Inloggen mislukt');
+        setIsLoading(false);
+        return;
+      }
+
+      // Store session info in localStorage
+      localStorage.setItem('sessionId', data.sessionId);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Redirect based on user type
+      const userType = data.user.gebruikerType.typeNaam;
+      
+      if (userType === 'Admin') {
+        router.push('/admin');
+      } else if (userType === 'Balie') {
+        router.push('/counter');
+      } else if (userType === 'Student') {
+        router.push('/student');
+      } else {
+        router.push('/');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Er is een fout opgetreden. Probeer het opnieuw.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,6 +101,13 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="w-full max-w-[283px] flex flex-col items-center gap-9">
+          {/* Error Message */}
+          {error && (
+            <div className="w-full bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+
           {/* Mobile: QR Code Option */}
           <div className="flex items-center gap-2.5 lg:hidden">
             <svg
@@ -79,10 +130,11 @@ export default function LoginPage() {
           <div className="w-full flex flex-col gap-2.5">
             <Input
               label="Gebruikersnaam"
-              placeholder="BenCrauwels"
+              placeholder="admin"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoading}
             />
             <Input
               label="Wachtwoord"
@@ -91,10 +143,17 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
-            <Button variant="primary" type="submit" className="w-full mt-4">
-              Login
+            <Button variant="primary" type="submit" className="w-full mt-4" disabled={isLoading}>
+              {isLoading ? 'Bezig met inloggen...' : 'Login'}
             </Button>
+            
+            {/* Login hints for development */}
+            <div className="text-gray-400 text-xs text-center mt-2">
+              <p>Test accounts:</p>
+              <p>admin/admin123 | balie1/balie123</p>
+            </div>
           </div>
         </form>
       </div>

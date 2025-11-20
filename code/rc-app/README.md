@@ -1,8 +1,55 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Repair Café Ticketing System
+
+A ticketing and management system for Repair Café events, built with Next.js, TypeScript, and PostgreSQL.
+
+## Database Setup
+
+This project uses Prisma ORM with PostgreSQL. Before running the application, you need to set up the database.
+
+### Prerequisites
+1. Install PostgreSQL from https://www.postgresql.org/download/
+2. Create a new database called `repaircafe`
+
+### Setup Steps
+
+1. **Configure Environment Variables**
+   
+   Update the `.env` file with your PostgreSQL credentials:
+   ```env
+   DATABASE_URL="postgresql://postgres:yourpassword@localhost:5432/repaircafe?schema=public"
+   ```
+
+2. **Generate Prisma Client**
+   ```bash
+   npx prisma generate
+   ```
+
+3. **Run Database Migration**
+   ```bash
+   npx prisma migrate dev --name init
+   ```
+   This creates the database schema and automatically seeds initial data.
+
+4. **Or use Push for Quick Development**
+   ```bash
+   npx prisma db push
+   npx prisma db seed
+   ```
+
+### Database Tools
+
+- **Prisma Studio** - Visual database browser:
+  ```bash
+  npx prisma studio
+  ```
+
+See [DATABASE_SETUP.md](./DATABASE_SETUP.md) for more details.
+
 ## Getting Started
 
-First, run the development server:
+After setting up the database, run the development server:
 
 ```bash
 npm run dev
