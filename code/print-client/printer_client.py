@@ -200,16 +200,29 @@ class PrinterClient:
         logger.info(f'Printer name: {self.printer_name}')
         
         try:
-            # Use WebSocket transport for real-time bidirectional communication
-            logger.debug('Attempting connection with WebSocket transport...')
+            # First, initialize the Socket.IO server by fetching the endpoint
+            import requests
+            init_url = f'{full_url}{socketio_path}'
+            logger.debug(f'Initializing Socket.IO server at {init_url}')
+            
+            try:
+                response = requests.get(init_url, verify=self.ssl_verify, timeout=5)
+                logger.debug(f'Initialization response: {response.status_code}')
+            except requests.exceptions.RequestException as req_error:
+                logger.warning(f'Initialization request failed (this may be normal): {req_error}')
+            
+            # Small delay to ensure server is initialized
+            time.sleep(0.5)
+            
+            # Now connect with Socket.IO client
+            logger.debug('Attempting Socket.IO connection...')
             self.sio.connect(
                 full_url,
                 socketio_path=socketio_path,
                 wait_timeout=10,
-                transports=['websocket'],
-                namespaces=['/']
+                transports=['websocket', 'polling']
             )
-            logger.info('Successfully connected via WebSocket!')
+            logger.info('Successfully connected!')
         except ConnectionError as e:
             logger.error(f'Connection failed: {e}')
             logger.error('Make sure the Next.js server is running and accessible')

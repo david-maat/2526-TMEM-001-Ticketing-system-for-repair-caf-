@@ -40,19 +40,26 @@ export async function sendPrintJob(data: {
     
     // Send to printer via WebSocket if connected
     if (printer.socketId && globalThis.printerIo) {
-      globalThis.printerIo.to(printer.socketId).emit('print-job', {
-        printJobId: result.printJob.printJobId,
-        volgnummer: data.volgnummer,
-        klantNaam: data.klantNaam,
-        klantTelefoon: data.klantTelefoon,
-        afdelingNaam: data.afdelingNaam,
-      })
-      
-      // Update status to sent
-      const { updatePrintJobStatus } = await import('@/lib/data/printers')
-      await updatePrintJobStatus(result.printJob.printJobId, 'sent')
-      
-      console.log(`Print job ${result.printJob.printJobId} sent to printer ${printer.printerNaam}`)
+      try {
+        globalThis.printerIo.to(printer.socketId).emit('print-job', {
+          printJobId: result.printJob.printJobId,
+          volgnummer: data.volgnummer,
+          klantNaam: data.klantNaam,
+          klantTelefoon: data.klantTelefoon,
+          afdelingNaam: data.afdelingNaam,
+        })
+        
+        // Update status to sent
+        const { updatePrintJobStatus } = await import('@/lib/data/printers')
+        await updatePrintJobStatus(result.printJob.printJobId, 'sent')
+        
+        console.log(`Print job ${result.printJob.printJobId} sent to printer ${printer.printerNaam}`)
+      } catch (emitError) {
+        console.error('Error emitting print job to socket:', emitError)
+        // Job is created in DB but not sent - will be picked up on reconnect
+      }
+    } else {
+      console.warn(`Printer ${printer.printerNaam} not connected - job will be sent on reconnect`)
     }
     
     return { success: true, printJob: result.printJob, printer }
@@ -98,17 +105,21 @@ export async function broadcastPrintJob(data: {
         
         // Send to printer via WebSocket if connected
         if (printer.socketId && globalThis.printerIo) {
-          globalThis.printerIo.to(printer.socketId).emit('print-job', {
-            printJobId: result.printJob.printJobId,
-            volgnummer: data.volgnummer,
-            klantNaam: data.klantNaam,
-            klantTelefoon: data.klantTelefoon,
-            afdelingNaam: data.afdelingNaam,
-          })
-          
-          // Update status to sent
-          const { updatePrintJobStatus } = await import('@/lib/data/printers')
-          await updatePrintJobStatus(result.printJob.printJobId, 'sent')
+          try {
+            globalThis.printerIo.to(printer.socketId).emit('print-job', {
+              printJobId: result.printJob.printJobId,
+              volgnummer: data.volgnummer,
+              klantNaam: data.klantNaam,
+              klantTelefoon: data.klantTelefoon,
+              afdelingNaam: data.afdelingNaam,
+            })
+            
+            // Update status to sent
+            const { updatePrintJobStatus } = await import('@/lib/data/printers')
+            await updatePrintJobStatus(result.printJob.printJobId, 'sent')
+          } catch (emitError) {
+            console.error(`Error emitting to printer ${printer.printerNaam}:`, emitError)
+          }
         }
       }
     }
