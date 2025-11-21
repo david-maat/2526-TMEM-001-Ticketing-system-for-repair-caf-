@@ -5,9 +5,12 @@ import BackButton from '../../components/BackButton';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Table from '../../components/Table';
+import VoorwerpEditModal from '../../components/modals/VoorwerpEditModal';
 
 export default function VoorwerpenPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const columns = [
     { key: 'registrationDate', header: 'Aanmeldingsdatum' },
@@ -43,6 +46,17 @@ export default function VoorwerpenPage() {
     }
   ];
 
+  const handleEdit = (item: any) => {
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
+
+  const confirmEdit = (data: any) => {
+    console.log('Editing item:', data);
+    setShowEditModal(false);
+    setSelectedItem(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#03091C] flex flex-col p-2.5 lg:p-5">
       {/* Header */}
@@ -74,9 +88,20 @@ export default function VoorwerpenPage() {
 
         {/* Table */}
         <div className="py-2.5 overflow-x-auto">
-          <Table columns={columns} data={data} />
+          <Table columns={columns} data={data} onEdit={handleEdit} />
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <VoorwerpEditModal
+        isOpen={showEditModal}
+        item={selectedItem}
+        onConfirm={confirmEdit}
+        onCancel={() => {
+          setShowEditModal(false);
+          setSelectedItem(null);
+        }}
+      />
     </div>
   );
 }

@@ -6,19 +6,32 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Table from '../../components/Table';
 import ConfirmModal from '../../components/ConfirmModal';
+import AfdelingEditModal from '../../components/modals/AfdelingEditModal';
 
 export default function AfdelingenPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const columns = [{ key: 'name', header: 'Naam' }];
 
   const data = [{ name: 'Elektronica' }, { name: 'Mechanica' }];
 
+  const handleEdit = (item: any) => {
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
+
   const handleDelete = (item: any) => {
     setSelectedItem(item);
     setShowDeleteModal(true);
+  };
+
+  const confirmEdit = (data: any) => {
+    console.log('Editing department:', data);
+    setShowEditModal(false);
+    setSelectedItem(null);
   };
 
   const confirmDelete = () => {
@@ -58,9 +71,20 @@ export default function AfdelingenPage() {
 
         {/* Table */}
         <div className="py-2.5">
-          <Table columns={columns} data={data} onDelete={handleDelete} />
+          <Table columns={columns} data={data} onEdit={handleEdit} onDelete={handleDelete} />
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <AfdelingEditModal
+        isOpen={showEditModal}
+        item={selectedItem}
+        onConfirm={confirmEdit}
+        onCancel={() => {
+          setShowEditModal(false);
+          setSelectedItem(null);
+        }}
+      />
 
       {/* Delete Modal */}
       <ConfirmModal

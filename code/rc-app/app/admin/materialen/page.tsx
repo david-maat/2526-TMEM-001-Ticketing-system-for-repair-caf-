@@ -6,10 +6,12 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Table from '../../components/Table';
 import ConfirmModal from '../../components/ConfirmModal';
+import MateriaalEditModal from '../../components/modals/MateriaalEditModal';
 
 export default function MaterialenPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const columns = [
@@ -31,9 +33,20 @@ export default function MaterialenPage() {
     }
   ];
 
+  const handleEdit = (item: any) => {
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
+
   const handleDelete = (item: any) => {
     setSelectedItem(item);
     setShowDeleteModal(true);
+  };
+
+  const confirmEdit = (data: any) => {
+    console.log('Editing material:', data);
+    setShowEditModal(false);
+    setSelectedItem(null);
   };
 
   const confirmDelete = () => {
@@ -87,11 +100,23 @@ export default function MaterialenPage() {
           <Table
             columns={columns}
             data={data}
+            onEdit={handleEdit}
             onDelete={handleDelete}
             renderCell={renderCell}
           />
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <MateriaalEditModal
+        isOpen={showEditModal}
+        item={selectedItem}
+        onConfirm={confirmEdit}
+        onCancel={() => {
+          setShowEditModal(false);
+          setSelectedItem(null);
+        }}
+      />
 
       {/* Delete Modal */}
       <ConfirmModal
