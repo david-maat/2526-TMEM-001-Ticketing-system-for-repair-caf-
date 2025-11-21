@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditModal from '../EditModal';
 import Input from '../Input';
 
@@ -19,18 +19,27 @@ interface CafeDagEditModalProps {
     name: string;
   }) => void;
   onCancel: () => void;
+  title?: string;
 }
 
 export default function CafeDagEditModal({
   isOpen,
   item,
   onConfirm,
-  onCancel
+  onCancel,
+  title = 'CafeDag bewerken'
 }: CafeDagEditModalProps) {
   const [startDate, setStartDate] = useState(item?.startDate || '');
   const [endDate, setEndDate] = useState(item?.endDate || '');
   const [location, setLocation] = useState(item?.location || '');
   const [name, setName] = useState(item?.name || '');
+
+  useEffect(() => {
+    setStartDate(item?.startDate || '');
+    setEndDate(item?.endDate || '');
+    setLocation(item?.location || '');
+    setName(item?.name || '');
+  }, [item]);
 
   const handleConfirm = () => {
     onConfirm({ startDate, endDate, location, name });
@@ -39,7 +48,7 @@ export default function CafeDagEditModal({
   return (
     <EditModal
       isOpen={isOpen}
-      title="CafeDag bewerken"
+      title={title}
       onConfirm={handleConfirm}
       onCancel={onCancel}
     >

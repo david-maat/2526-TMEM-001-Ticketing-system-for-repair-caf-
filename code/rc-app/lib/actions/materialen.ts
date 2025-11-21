@@ -131,3 +131,49 @@ export async function updateMateriaalAantal(
     throw new Error('Er is een fout opgetreden bij het wijzigen van de hoeveelheid')
   }
 }
+
+// Create a new materiaal
+export async function createMateriaal(naam: string) {
+  try {
+    const materiaal = await prisma.materiaal.create({
+      data: { naam },
+    })
+
+    revalidatePath('/admin/materialen')
+    return { success: true, materiaal }
+  } catch (error) {
+    console.error('Error creating materiaal:', error)
+    return { success: false, error: 'Failed to create materiaal' }
+  }
+}
+
+// Update an existing materiaal
+export async function updateMateriaal(materiaalId: number, naam: string) {
+  try {
+    const materiaal = await prisma.materiaal.update({
+      where: { materiaalId },
+      data: { naam },
+    })
+
+    revalidatePath('/admin/materialen')
+    return { success: true, materiaal }
+  } catch (error) {
+    console.error('Error updating materiaal:', error)
+    return { success: false, error: 'Failed to update materiaal' }
+  }
+}
+
+// Delete a materiaal
+export async function deleteMateriaal(materiaalId: number) {
+  try {
+    await prisma.materiaal.delete({
+      where: { materiaalId },
+    })
+
+    revalidatePath('/admin/materialen')
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting materiaal:', error)
+    return { success: false, error: 'Failed to delete materiaal' }
+  }
+}

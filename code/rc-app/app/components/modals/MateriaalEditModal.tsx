@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditModal from '../EditModal';
 import Input from '../Input';
 
@@ -17,18 +17,27 @@ interface MateriaalEditModalProps {
     photo?: File | null;
   }) => void;
   onCancel: () => void;
+  title?: string;
 }
 
 export default function MateriaalEditModal({
   isOpen,
   item,
   onConfirm,
-  onCancel
+  onCancel,
+  title = 'Materiaal bewerken'
 }: MateriaalEditModalProps) {
   const [name, setName] = useState(item?.name || '');
   const [price, setPrice] = useState(item?.price || '');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState(item?.photo || '');
+
+  useEffect(() => {
+    setName(item?.name || '');
+    setPrice(item?.price || '');
+    setPhoto(null);
+    setPhotoPreview(item?.photo || '');
+  }, [item]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,7 +58,7 @@ export default function MateriaalEditModal({
   return (
     <EditModal
       isOpen={isOpen}
-      title="Materiaal bewerken"
+      title={title}
       onConfirm={handleConfirm}
       onCancel={onCancel}
     >

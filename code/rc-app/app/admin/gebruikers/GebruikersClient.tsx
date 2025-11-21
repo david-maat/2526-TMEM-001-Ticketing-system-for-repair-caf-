@@ -6,6 +6,7 @@ import Button from '../../components/Button';
 import Table from '../../components/Table';
 import ConfirmModal from '../../components/ConfirmModal';
 import QRLoginModal from '../../components/QRLoginModal';
+import GebruikerEditModal from '../../components/modals/GebruikerEditModal';
 import { generateQRLoginToken } from '@/lib/actions/gebruikers';
 import type { GebruikerWithType } from '@/lib/types';
 
@@ -24,10 +25,12 @@ interface GebruikersClientProps {
 export default function GebruikersClient({ gebruikers }: GebruikersClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TableRow | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [qrUserName, setQrUserName] = useState('');
+  const [modalTitle, setModalTitle] = useState('Gebruiker bewerken');
 
   const columns = [
     { key: 'name', header: 'Naam' },
@@ -45,15 +48,81 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
     studentNumber: gebruiker.gebruikerType.typeNaam === 'Student' ? gebruiker.gebruikerNaam : 'N.v.t'
   }));
 
+  const handleEdit = (item: TableRow) => {
+    setSelectedItem(item);
+    setModalTitle('Gebruiker bewerken');
+    setShowEditModal(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedItem(null);
+    setModalTitle('Gebruiker toevoegen');
+    setShowEditModal(true);
+  };
+
   const handleDelete = (item: TableRow) => {
     setSelectedItem(item);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    console.log('Deleting user:', selectedItem);
-    setShowDeleteModal(false);
-    setSelectedItem(null);
+  const confirmEdit = async (data: { name: string; password: string; passwordConfirm: string; type: string }) => {
+    if (data.password !== data.passwordConfirm) {
+      alert('Wachtwoorden komen niet overeen');
+      return;
+    }
+
+    // Map type name to ID
+    const typeMap: { [key: string]: number } = {
+      'admin': 1,
+      'student': 2,
+      'baliemedewerker': 3
+    };
+
+    const gebruikerTypeId = typeMap[data.type.toLowerCase()] || 2;
+
+    if (selectedItem) {
+      // Update existing
+      const { updateGebruiker } = await import('@/lib/actions/gebruikers');
+      const result = await updateGebruiker(selectedItem.id, {
+        naam: data.name,
+        ...(data.password && { wachtwoord: data.password }),
+        gebruikerTypeId,
+      });
+      if (result.success) {
+        setShowEditModal(false);
+        setSelectedItem(null);
+      } else {
+        alert('Fout bij het bijwerken: ' + result.error);
+      }
+    } else {
+      // Create new - need username
+      const gebruikerNaam = data.name.toLowerCase().replaceAll(/\s+/g, '');
+      const { createGebruiker } = await import('@/lib/actions/gebruikers');
+      const result = await createGebruiker({
+        gebruikerNaam,
+        naam: data.name,
+        wachtwoord: data.password,
+        gebruikerTypeId,
+      });
+      if (result.success) {
+        setShowEditModal(false);
+      } else {
+        alert('Fout bij het aanmaken: ' + result.error);
+      }
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (selectedItem) {
+      const { deleteGebruiker } = await import('@/lib/actions/gebruikers');
+      const result = await deleteGebruiker(selectedItem.id);
+      if (result.success) {
+        setShowDeleteModal(false);
+        setSelectedItem(null);
+      } else {
+        alert('Fout bij het verwijderen: ' + result.error);
+      }
+    }
   };
 
   const handleGenerateQR = async (item: TableRow) => {
@@ -112,7 +181,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="primary" className="mt-6">
+          <Button variant="primary" className="mt-6" onClick={handleAdd}>
             +
           </Button>
         </div>
@@ -122,11 +191,24 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
           <Table
             columns={columns}
             data={data}
+            onEdit={handleEdit}
             onDelete={handleDelete}
             renderCell={renderCell}
           />
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <GebruikerEditModal
+        isOpen={showEditModal}
+        item={selectedItem ? { name: selectedItem.name, type: selectedItem.type } : null}
+        onConfirm={confirmEdit}
+        onCancel={() => {
+          setShowEditModal(false);
+          setSelectedItem(null);
+        }}
+        title={modalTitle}
+      />
 
       {/* Delete Modal */}
       <ConfirmModal

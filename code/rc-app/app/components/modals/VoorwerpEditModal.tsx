@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditModal from '../EditModal';
 import Input from '../Input';
 import Dropdown from '../Dropdown';
@@ -22,19 +22,29 @@ interface VoorwerpEditModalProps {
     status: string;
   }) => void;
   onCancel: () => void;
+  title?: string;
 }
 
 export default function VoorwerpEditModal({
   isOpen,
   item,
   onConfirm,
-  onCancel
+  onCancel,
+  title = 'Voorwerp bewerken'
 }: VoorwerpEditModalProps) {
   const [problem, setProblem] = useState(item?.problem || '');
   const [description, setDescription] = useState(item?.description || '');
   const [advice, setAdvice] = useState(item?.advice || '');
   const [department, setDepartment] = useState(item?.department || '');
   const [status, setStatus] = useState(item?.status || '');
+
+  useEffect(() => {
+    setProblem(item?.problem || '');
+    setDescription(item?.description || '');
+    setAdvice(item?.advice || '');
+    setDepartment(item?.department || '');
+    setStatus(item?.status || '');
+  }, [item]);
 
   const departmentOptions = [
     { value: 'elektronica', label: 'Elektronica' },
@@ -55,7 +65,7 @@ export default function VoorwerpEditModal({
   return (
     <EditModal
       isOpen={isOpen}
-      title="Voorwerp bewerken"
+      title={title}
       onConfirm={handleConfirm}
       onCancel={onCancel}
     >

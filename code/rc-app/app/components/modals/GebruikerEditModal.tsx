@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditModal from '../EditModal';
 import Input from '../Input';
 import Dropdown from '../Dropdown';
@@ -18,18 +18,27 @@ interface GebruikerEditModalProps {
     type: string;
   }) => void;
   onCancel: () => void;
+  title?: string;
 }
 
 export default function GebruikerEditModal({
   isOpen,
   item,
   onConfirm,
-  onCancel
+  onCancel,
+  title = 'Gebruiker bewerken'
 }: GebruikerEditModalProps) {
   const [name, setName] = useState(item?.name || '');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [type, setType] = useState(item?.type || '');
+
+  useEffect(() => {
+    setName(item?.name || '');
+    setPassword('');
+    setPasswordConfirm('');
+    setType(item?.type || '');
+  }, [item]);
 
   const typeOptions = [
     { value: 'admin', label: 'Admin' },
@@ -44,7 +53,7 @@ export default function GebruikerEditModal({
   return (
     <EditModal
       isOpen={isOpen}
-      title="Gebruiker bewerken"
+      title={title}
       onConfirm={handleConfirm}
       onCancel={onCancel}
     >

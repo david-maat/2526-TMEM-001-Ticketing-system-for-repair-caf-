@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditModal from '../EditModal';
 import Input from '../Input';
 
@@ -11,15 +11,21 @@ interface AfdelingEditModalProps {
   } | null;
   onConfirm: (data: { name: string }) => void;
   onCancel: () => void;
+  title?: string;
 }
 
 export default function AfdelingEditModal({
   isOpen,
   item,
   onConfirm,
-  onCancel
+  onCancel,
+  title = 'Afdeling bewerken'
 }: AfdelingEditModalProps) {
   const [name, setName] = useState(item?.name || '');
+
+  useEffect(() => {
+    setName(item?.name || '');
+  }, [item]);
 
   const handleConfirm = () => {
     onConfirm({ name });
@@ -28,7 +34,7 @@ export default function AfdelingEditModal({
   return (
     <EditModal
       isOpen={isOpen}
-      title="Afdeling bewerken"
+      title={title}
       onConfirm={handleConfirm}
       onCancel={onCancel}
     >
