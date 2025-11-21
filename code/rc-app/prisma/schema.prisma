@@ -138,3 +138,29 @@ model Materiaal {
   naam                String
   gebruikteMaterialen GebruikteMateriaal[]
 }
+
+model Printer {
+  printerId      Int        @id @default(autoincrement())
+  printerNaam    String     @unique
+  socketId       String?    @unique
+  isConnected    Boolean    @default(false)
+  lastConnected  DateTime?
+  createdAt      DateTime   @default(now())
+  printJobs      PrintJob[]
+}
+
+model PrintJob {
+  printJobId     Int       @id @default(autoincrement())
+  printerId      Int
+  voorwerpId     Int
+  volgnummer     String
+  klantNaam      String
+  klantTelefoon  String?
+  afdelingNaam   String
+  status         String    @default("pending") // pending, sent, completed, failed
+  createdAt      DateTime  @default(now())
+  sentAt         DateTime?
+  completedAt    DateTime?
+  errorMessage   String?
+  printer        Printer   @relation(fields: [printerId], references: [printerId])
+}

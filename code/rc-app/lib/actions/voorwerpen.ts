@@ -193,6 +193,27 @@ export async function registerVoorwerp(data: RegisterVoorwerpInput) {
       console.error('Error broadcasting update:', error)
     }
 
+    // Send print job to connected printer
+    try {
+      const { sendPrintJob } = await import('@/lib/printer-broadcast')
+      const printResult = await sendPrintJob({
+        voorwerpId: voorwerp.voorwerpId,
+        volgnummer: voorwerp.volgnummer,
+        klantNaam: voorwerp.klant.klantnaam,
+        klantTelefoon: voorwerp.klant.telNummer,
+        afdelingNaam: voorwerp.afdeling.naam,
+      })
+      
+      if (printResult.success) {
+        console.log('Print job created successfully')
+      } else {
+        console.warn('Failed to create print job:', printResult.error)
+      }
+    } catch (error) {
+      console.error('Error creating print job:', error)
+      // Don't fail the registration if print fails
+    }
+
     revalidatePath('/counter')
     revalidatePath('/admin/voorwerpen')
 

@@ -14,3 +14,30 @@ interface SocketWithIO extends NetSocket {
 export interface NextApiResponseServerIO extends NextApiResponse {
   socket: SocketWithIO
 }
+
+// Printer WebSocket event types
+export interface PrintJobData {
+  printJobId: number
+  volgnummer: string
+  klantNaam: string
+  klantTelefoon?: string | null
+  afdelingNaam: string
+}
+
+export interface PrinterRegistrationData {
+  printerNaam: string
+}
+
+export interface PrintCompletedData {
+  printJobId: number
+}
+
+export interface PrintFailedData {
+  printJobId: number
+  errorMessage?: string
+}
+
+// Global printer IO instance
+declare global {
+  var printerIo: IOServer | undefined
+}

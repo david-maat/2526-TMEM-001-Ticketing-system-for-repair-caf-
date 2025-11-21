@@ -63,12 +63,13 @@ export default function RegisterItemPage() {
         return;
       }
 
-      // Success - redirect with tracking number
+      // Success - redirect to confirmation page with tracking number
       localStorage.setItem('registeredItem', JSON.stringify(result.voorwerp));
+      const trackingNumber = result.trackingNumber || result.voorwerp?.voorwerpNummer || 'XXXX';
       if (result.trackingNumber) {
         localStorage.setItem('trackingNumber', result.trackingNumber);
       }
-      router.push('/counter');
+      router.push(`/counter/register/confirm?volgnummer=${trackingNumber}`);
     } catch (err) {
       console.error('Register error:', err);
       setError('Er is een fout opgetreden. Probeer het opnieuw.');
