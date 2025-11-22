@@ -51,23 +51,54 @@ export default function MaterialenClient({ materialen }: MaterialenClientProps) 
     };
 
     const confirmEdit = async (data: { name: string; price: string; photo?: File | null }) => {
-        if (selectedItem) {
-            // Update existing
-            const result = await updateMateriaal(selectedItem.materiaalId, data.name);
-            if (result.success) {
-                setShowEditModal(false);
-                setSelectedItem(null);
-            } else {
-                alert('Fout bij het bijwerken: ' + result.error);
+        try {
+            let fotoUrl: string | undefined = undefined;
+
+            // Upload photo if provided
+            if (data.photo) {
+                const formData = new FormData();
+                formData.append('file', data.photo);
+
+                const uploadResponse = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!uploadResponse.ok) {
+                    const error = await uploadResponse.json();
+                    alert('Fout bij uploaden foto: ' + (error.error || 'Onbekende fout'));
+                    return;
+                }
+
+                const uploadResult = await uploadResponse.json();
+                fotoUrl = uploadResult.url;
             }
-        } else {
-            // Create new
-            const result = await createMateriaal(data.name);
-            if (result.success) {
-                setShowEditModal(false);
+
+            if (selectedItem) {
+                // Update existing
+                const result = await updateMateriaal(
+                    selectedItem.materiaalId, 
+                    data.name,
+                    fotoUrl
+                );
+                if (result.success) {
+                    setShowEditModal(false);
+                    setSelectedItem(null);
+                } else {
+                    alert('Fout bij het bijwerken: ' + result.error);
+                }
             } else {
-                alert('Fout bij het aanmaken: ' + result.error);
+                // Create new
+                const result = await createMateriaal(data.name, fotoUrl);
+                if (result.success) {
+                    setShowEditModal(false);
+                } else {
+                    alert('Fout bij het aanmaken: ' + result.error);
+                }
             }
+        } catch (error) {
+            console.error('Error in confirmEdit:', error);
+            alert('Er is een fout opgetreden');
         }
     };
 
@@ -117,7 +148,11 @@ export default function MaterialenClient({ materialen }: MaterialenClientProps) 
             {/* Edit Modal */}
             <MateriaalEditModal
                 isOpen={showEditModal}
-                item={selectedItem ? { name: selectedItem.naam, price: '0', photo: '' } : null}
+                item={selectedItem ? { 
+                    name: selectedItem.naam, 
+                    price: '0', 
+                    photo: selectedItem.fotoUrl || '' 
+                } : null}
                 onConfirm={confirmEdit}
                 onCancel={() => {
                     setShowEditModal(false);

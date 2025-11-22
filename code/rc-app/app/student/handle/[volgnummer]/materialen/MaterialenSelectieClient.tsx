@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import BackButton from '@/app/components/BackButton';
 import Button from '@/app/components/Button';
 import { addMateriaalToVoorwerp, updateMateriaalAantal } from '@/lib/actions/materialen';
@@ -9,6 +10,7 @@ import { addMateriaalToVoorwerp, updateMateriaalAantal } from '@/lib/actions/mat
 interface Materiaal {
   materiaalId: number;
   naam: string;
+  fotoUrl?: string | null;
 }
 
 interface GebruiktMateriaal {
@@ -128,8 +130,20 @@ export default function MaterialenSelectieClient({ materialen, volgnummer, gebru
               key={materiaal.materiaalId}
               className="flex items-center gap-4 bg-[#0A1532] p-4 border-b last:border-b-0 border-white"
             >
-              {/* Material Image Placeholder */}
-              <div className="w-20 h-20 bg-white rounded-md flex-shrink-0"></div>
+              {/* Material Image */}
+              <div className="w-20 h-20 bg-white rounded-md flex-shrink-0 overflow-hidden relative">
+                {materiaal.fotoUrl ? (
+                  <Image
+                    src={materiaal.fotoUrl}
+                    alt={materiaal.naam}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300"></div>
+                )}
+              </div>
 
               {/* Material Name */}
               <div className="flex-1 text-lg">

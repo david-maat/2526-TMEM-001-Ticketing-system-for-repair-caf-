@@ -136,6 +136,7 @@ model GebruikteMateriaal {
 model Materiaal {
   materiaalId         Int                  @id @default(autoincrement())
   naam                String
+  fotoUrl             String?
   gebruikteMaterialen GebruikteMateriaal[]
 }
 

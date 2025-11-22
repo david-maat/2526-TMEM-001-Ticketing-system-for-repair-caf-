@@ -133,10 +133,13 @@ export async function updateMateriaalAantal(
 }
 
 // Create a new materiaal
-export async function createMateriaal(naam: string) {
+export async function createMateriaal(naam: string, fotoUrl?: string) {
   try {
     const materiaal = await prisma.materiaal.create({
-      data: { naam },
+      data: { 
+        naam,
+        fotoUrl: fotoUrl || null,
+      },
     })
 
     revalidatePath('/admin/materialen')
@@ -148,11 +151,18 @@ export async function createMateriaal(naam: string) {
 }
 
 // Update an existing materiaal
-export async function updateMateriaal(materiaalId: number, naam: string) {
+export async function updateMateriaal(materiaalId: number, naam: string, fotoUrl?: string | null) {
   try {
+    const updateData: { naam: string; fotoUrl?: string | null } = { naam };
+    
+    // Only update fotoUrl if it's explicitly provided (undefined means don't change)
+    if (fotoUrl !== undefined) {
+      updateData.fotoUrl = fotoUrl;
+    }
+
     const materiaal = await prisma.materiaal.update({
       where: { materiaalId },
-      data: { naam },
+      data: updateData,
     })
 
     revalidatePath('/admin/materialen')
