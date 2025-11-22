@@ -36,12 +36,8 @@ export default function HandleVoorwerpClient({ voorwerp, volgnummer }: HandleVoo
   };
 
   const handleComplete = async () => {
-    // Update status to "Klaar" (status ID 3)
-    await updateVoorwerp(volgnummer, {
-      voorwerpStatusId: 3,
-      klaarDuur: new Date(),
-    });
-    router.push('/student');
+    // Redirect to advice/repair status page
+    router.push(`/student/handle/${volgnummer}/afwerking`);
   };
 
   return (

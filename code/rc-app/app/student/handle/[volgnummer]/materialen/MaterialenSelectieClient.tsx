@@ -2,25 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import BackButton from '@/app/components/BackButton';
 import Button from '@/app/components/Button';
-import { addMateriaalToVoorwerp } from '@/lib/actions/materialen';
+import { addMateriaalToVoorwerp, updateMateriaalAantal } from '@/lib/actions/materialen';
 
 interface Materiaal {
   materiaalId: number;
   naam: string;
+  fotoUrl?: string | null;
+}
+
+interface GebruiktMateriaal {
+  materiaalId: number;
+  aantal: number;
 }
 
 interface MaterialenSelectieClientProps {
   readonly materialen: Materiaal[];
   readonly volgnummer: string;
+  readonly gebruikteMaterialen?: GebruiktMateriaal[];
 }
 
-export default function MaterialenSelectieClient({ materialen, volgnummer }: MaterialenSelectieClientProps) {
+export default function MaterialenSelectieClient({ materialen, volgnummer, gebruikteMaterialen = [] }: MaterialenSelectieClientProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMaterialen, setFilteredMaterialen] = useState(materialen);
   const [selectedMaterialen, setSelectedMaterialen] = useState<Map<number, number>>(new Map());
+
+  // Populate selectedMaterialen from bestaande gebruikteMaterialen when component mounts or prop changes
+  useEffect(() => {
+    const map = new Map<number, number>();
+    gebruikteMaterialen.forEach((g) => {
+      if (typeof g.materiaalId === 'number' && typeof g.aantal === 'number') {
+        map.set(g.materiaalId, g.aantal);
+      }
+    });
+    setSelectedMaterialen(map);
+  }, [gebruikteMaterialen]);
 
   // Filter materials based on search query
   useEffect(() => {
@@ -56,11 +75,25 @@ export default function MaterialenSelectieClient({ materialen, volgnummer }: Mat
 
   const handleAddMaterials = async () => {
     try {
-      // Add all selected materials
-      for (const [materiaalId, aantal] of selectedMaterialen.entries()) {
-        if (aantal > 0) {
-          await addMateriaalToVoorwerp(volgnummer, materiaalId, aantal);
+      // For each materiaal compute desired vs existing and call appropriate action
+      // Build a lookup for existing counts
+      const existingMap = new Map<number, number>();
+      (gebruikteMaterialen || []).forEach(g => existingMap.set(g.materiaalId, g.aantal));
+
+      // Iterate over all materials (so unchanged ones are considered too)
+      for (const materiaal of materialen) {
+        const id = materiaal.materiaalId;
+        const desired = selectedMaterialen.get(id) || 0;
+        const existing = existingMap.get(id) || 0;
+
+        if (desired > existing) {
+          // add the delta
+          await addMateriaalToVoorwerp(volgnummer, id, desired - existing);
+        } else if (desired < existing) {
+          // update to a lower amount (or remove if 0)
+          await updateMateriaalAantal(volgnummer, id, desired);
         }
+        // if equal, do nothing
       }
       router.back();
     } catch (error) {
@@ -97,8 +130,20 @@ export default function MaterialenSelectieClient({ materialen, volgnummer }: Mat
               key={materiaal.materiaalId}
               className="flex items-center gap-4 bg-[#0A1532] p-4 border-b last:border-b-0 border-white"
             >
-              {/* Material Image Placeholder */}
-              <div className="w-20 h-20 bg-white rounded-md flex-shrink-0"></div>
+              {/* Material Image */}
+              <div className="w-20 h-20 bg-white rounded-md flex-shrink-0 overflow-hidden relative">
+                {materiaal.fotoUrl ? (
+                  <Image
+                    src={materiaal.fotoUrl}
+                    alt={materiaal.naam}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300"></div>
+                )}
+              </div>
 
               {/* Material Name */}
               <div className="flex-1 text-lg">

@@ -287,6 +287,78 @@ export async function getVoorwerpForDelivery(volgnummer: string) {
   }
 }
 
+export async function sendDeliveryPrintJob(volgnummer: string) {
+  try {
+    if (!volgnummer) {
+      return { success: false, error: 'Volgnummer is verplicht' }
+    }
+
+    // Find the item
+    const voorwerp = await prisma.voorwerp.findUnique({
+      where: { volgnummer },
+      include: {
+        klant: true,
+        voorwerpStatus: true,
+        afdeling: true,
+        gebruikteMaterialen: {
+          include: {
+            materiaal: true,
+          },
+        },
+      },
+    })
+
+    if (!voorwerp) {
+      return { success: false, error: 'Voorwerp niet gevonden' }
+    }
+
+    // Send print job for delivery receipt to connected printer with payment details
+    try {
+      const { sendPrintJob } = await import('@/lib/printer-broadcast')
+
+      // Calculate payment details
+      const materials = voorwerp.gebruikteMaterialen.map(gm => ({
+        naam: gm.materiaal.naam,
+        aantal: gm.aantal,
+        prijs: gm.aantal, // Price equals amount in this system
+      }))
+
+      const subtotal = materials.reduce((sum, m) => sum + m.prijs, 0)
+
+      const printResult = await sendPrintJob({
+        voorwerpId: voorwerp.voorwerpId,
+        volgnummer: voorwerp.volgnummer,
+        klantNaam: voorwerp.klant.klantnaam,
+        klantTelefoon: voorwerp.klant.telNummer,
+        afdelingNaam: voorwerp.afdeling.naam,
+        printData: {
+          type: 'delivery',
+          voorwerpBeschrijving: voorwerp.voorwerpBeschrijving,
+          klachtBeschrijving: voorwerp.klachtBeschrijving,
+          advies: voorwerp.advies,
+          materials,
+          subtotal,
+          totalPrice: subtotal,
+        },
+      })
+
+      if (printResult.success) {
+        console.log('Delivery receipt print job created successfully')
+      } else {
+        console.warn('Failed to create delivery receipt print job:', printResult.error)
+      }
+    } catch (error) {
+      console.error('Error creating delivery receipt print job:', error)
+      return { success: false, error: 'Er is een fout opgetreden bij het versturen van de printopdracht' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error sending delivery print job:', error)
+    return { success: false, error: 'Er is een fout opgetreden bij het versturen van de printopdracht' }
+  }
+}
+
 export async function confirmDelivery(volgnummer: string) {
   try {
     if (!volgnummer) {
@@ -329,45 +401,6 @@ export async function confirmDelivery(volgnummer: string) {
       console.error('Error broadcasting update:', error)
     }
 
-    // Send print job for delivery receipt to connected printer with payment details
-    try {
-      const { sendPrintJob } = await import('@/lib/printer-broadcast')
-
-      // Calculate payment details
-      const materials = updatedVoorwerp.gebruikteMaterialen.map(gm => ({
-        naam: gm.materiaal.naam,
-        aantal: gm.aantal,
-        prijs: gm.aantal, // Price equals amount in this system
-      }))
-
-      const subtotal = materials.reduce((sum, m) => sum + m.prijs, 0)
-
-      const printResult = await sendPrintJob({
-        voorwerpId: updatedVoorwerp.voorwerpId,
-        volgnummer: updatedVoorwerp.volgnummer,
-        klantNaam: updatedVoorwerp.klant.klantnaam,
-        klantTelefoon: updatedVoorwerp.klant.telNummer,
-        afdelingNaam: updatedVoorwerp.afdeling.naam,
-        printData: {
-          type: 'delivery',
-          voorwerpBeschrijving: updatedVoorwerp.voorwerpBeschrijving,
-          klachtBeschrijving: updatedVoorwerp.klachtBeschrijving,
-          materials,
-          subtotal,
-          totalPrice: subtotal,
-        },
-      })
-
-      if (printResult.success) {
-        console.log('Delivery receipt print job created successfully')
-      } else {
-        console.warn('Failed to create delivery receipt print job:', printResult.error)
-      }
-    } catch (error) {
-      console.error('Error creating delivery receipt print job:', error)
-      // Don't fail the delivery if print fails
-    }
-
     revalidatePath('/counter')
     revalidatePath('/admin/voorwerpen')
 
@@ -406,5 +439,148 @@ export async function updateVoorwerp(volgnummer: string, data: any) {
   } catch (error) {
     console.error('Error updating voorwerp:', error)
     return { success: false, error: 'Er is een fout opgetreden bij het bijwerken' }
+  }
+}
+
+interface CompleteVoorwerpWithAdviceInput {
+  volgnummer: string
+  advies: string
+  reparatieStatus: string
+}
+
+export async function completeVoorwerpWithAdvice(data: CompleteVoorwerpWithAdviceInput) {
+  try {
+    // Validate input
+    if (!data.advies || !data.reparatieStatus) {
+      return { success: false, error: 'Advies en reparatiestatus zijn verplicht' }
+    }
+
+    // Get the voorwerp first to retrieve voorwerpId
+    const voorwerp = await prisma.voorwerp.findUnique({
+      where: { volgnummer: data.volgnummer },
+    })
+
+    if (!voorwerp) {
+      return { success: false, error: 'Voorwerp niet gevonden' }
+    }
+
+    // Get "Klaar" status
+    const klaarStatus = await prisma.voorwerpStatus.findFirst({
+      where: { naam: 'Klaar' },
+    })
+
+    if (!klaarStatus) {
+      return { success: false, error: 'Status "Klaar" niet gevonden in database' }
+    }
+
+    // Update voorwerp with advice and status in a transaction
+    const updatedVoorwerp = await prisma.$transaction(async (tx) => {
+      // Update voorwerp with advice and set status to "Klaar"
+      const updated = await tx.voorwerp.update({
+        where: { volgnummer: data.volgnummer },
+        data: {
+          advies: data.advies,
+          voorwerpStatusId: klaarStatus.voorwerpStatusId,
+          klaarDuur: new Date(),
+        },
+        include: {
+          klant: true,
+          voorwerpStatus: true,
+          afdeling: true,
+        },
+      })
+
+      // Create or update repair status record
+      await tx.reparatieStatus.upsert({
+        where: { voorwerpId: voorwerp.voorwerpId },
+        update: {
+          status: data.reparatieStatus,
+        },
+        create: {
+          voorwerpId: voorwerp.voorwerpId,
+          status: data.reparatieStatus,
+        },
+      })
+
+      return updated
+    })
+
+    // Broadcast update to all connected clients via WebSocket
+    try {
+      const { broadcastVoorwerpenUpdate } = await import('@/lib/broadcast')
+      await broadcastVoorwerpenUpdate()
+    } catch (error) {
+      console.error('Error broadcasting update:', error)
+    }
+
+    revalidatePath('/student')
+    revalidatePath('/counter')
+    revalidatePath('/admin/voorwerpen')
+
+    return { success: true, voorwerp: updatedVoorwerp }
+  } catch (error) {
+    console.error('Error completing voorwerp with advice:', error)
+    return { success: false, error: 'Er is een fout opgetreden bij het voltooien' }
+  }
+}
+
+// Delete a voorwerp
+export async function deleteVoorwerp(volgnummer: string) {
+  try {
+    // First, find the voorwerp to get its ID
+    const voorwerp = await prisma.voorwerp.findUnique({
+      where: { volgnummer },
+      select: { voorwerpId: true }
+    })
+
+    if (!voorwerp) {
+      return { success: false, error: 'Voorwerp not found' }
+    }
+
+    // Delete related records first to avoid foreign key constraint violations
+    // Delete in transaction to ensure data consistency
+    await prisma.$transaction(async (tx) => {
+      // Delete related Cafedagvoorwerp records
+      await tx.cafedagvoorwerp.deleteMany({
+        where: { voorwerpId: voorwerp.voorwerpId }
+      })
+
+      // Delete related GebruikteMateriaal records
+      await tx.gebruikteMateriaal.deleteMany({
+        where: { voorwerpId: voorwerp.voorwerpId }
+      })
+
+      // Delete related ReparatieStatus if exists
+      await tx.reparatieStatus.deleteMany({
+        where: { voorwerpId: voorwerp.voorwerpId }
+      })
+
+      // Delete related PrintJob records
+      await tx.printJob.deleteMany({
+        where: { voorwerpId: voorwerp.voorwerpId }
+      })
+
+      // Finally, delete the voorwerp itself
+      await tx.voorwerp.delete({
+        where: { volgnummer }
+      })
+    })
+
+    // Broadcast update to all connected clients via WebSocket
+    try {
+      const { broadcastVoorwerpenUpdate } = await import('@/lib/broadcast')
+      await broadcastVoorwerpenUpdate()
+    } catch (error) {
+      console.error('Error broadcasting update:', error)
+    }
+
+    revalidatePath('/student')
+    revalidatePath('/counter')
+    revalidatePath('/admin/voorwerpen')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting voorwerp:', error)
+    return { success: false, error: 'Failed to delete voorwerp' }
   }
 }

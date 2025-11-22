@@ -33,6 +33,7 @@ export type VoorwerpFull = Prisma.VoorwerpGetPayload<{
   }
 }>
 export type VoorwerpStatus = Prisma.VoorwerpStatusGetPayload<{}>
+export type ReparatieStatus = Prisma.ReparatieStatusGetPayload<{}>
 
 // Department types
 export type Afdeling = Prisma.AfdelingGetPayload<{}>

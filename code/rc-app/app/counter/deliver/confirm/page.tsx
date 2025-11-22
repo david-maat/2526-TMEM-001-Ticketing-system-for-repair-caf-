@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import BackButton from '../../../components/BackButton';
 import Button from '../../../components/Button';
 import ProtectedRoute from '../../../components/ProtectedRoute';
-import { confirmDelivery } from '@/lib/actions/voorwerpen';
+import { sendDeliveryPrintJob, confirmDelivery } from '@/lib/actions/voorwerpen';
 
 interface VoorwerpData {
   voorwerpId: number;
   volgnummer: string;
   klachtBeschrijving?: string;
   voorwerpBeschrijving?: string;
+  advies?: string;
   gebruikteMaterialen?: Array<{
     aantal: number;
     materiaal: {
@@ -49,8 +50,8 @@ export default function DeliverConfirmPage() {
     if (!voorwerp) return;
 
     try {
-      // Call confirmDelivery which will handle the print job
-      const result = await confirmDelivery(voorwerp.volgnummer);
+      // Send print job without changing status
+      const result = await sendDeliveryPrintJob(voorwerp.volgnummer);
 
       if (!result.success) {
         console.error('Error sending print job:', result.error);
@@ -66,6 +67,15 @@ export default function DeliverConfirmPage() {
     setIsLoading(true);
 
     try {
+      // Update status to "Afgeleverd"
+      const result = await confirmDelivery(voorwerp.volgnummer);
+
+      if (!result.success) {
+        console.error('Error confirming delivery:', result.error);
+        setIsLoading(false);
+        return;
+      }
+
       // Clear localStorage before redirecting
       localStorage.removeItem('deliveredItem');
 
@@ -116,7 +126,7 @@ export default function DeliverConfirmPage() {
             <div className="flex-1 bg-white rounded-lg p-6 min-h-[200px]">
               <h3 className="text-xl font-semibold mb-4 text-black">Advies</h3>
               <div className="text-black whitespace-pre-wrap">
-                {voorwerp.klachtBeschrijving || 'Geen advies beschikbaar'}
+                {voorwerp.advies || 'Geen advies beschikbaar'}
               </div>
             </div>
 

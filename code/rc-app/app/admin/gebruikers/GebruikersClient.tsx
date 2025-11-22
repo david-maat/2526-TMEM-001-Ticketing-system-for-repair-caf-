@@ -45,7 +45,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
     name: gebruiker.naam,
     type: gebruiker.gebruikerType.typeNaam,
     username: gebruiker.gebruikerType.typeNaam === 'Student' ? 'N.v.t' : gebruiker.gebruikerNaam,
-    studentNumber: gebruiker.gebruikerType.typeNaam === 'Student' ? gebruiker.gebruikerNaam : 'N.v.t'
+    studentNumber: gebruiker.studentNummer || 'N.v.t'
   }));
 
   const handleEdit = (item: TableRow) => {
@@ -65,8 +65,25 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
     setShowDeleteModal(true);
   };
 
-  const confirmEdit = async (data: { name: string; password: string; passwordConfirm: string; type: string }) => {
-    if (data.password !== data.passwordConfirm) {
+  const confirmEdit = async (data: { name: string; username?: string; password: string; passwordConfirm: string; type: string; studentNumber?: string }) => {
+    // Validate mandatory fields
+    if (!data.name || data.name.trim() === '') {
+      alert('Naam is verplicht');
+      return;
+    }
+
+    if (data.type.toLowerCase() === 'student' && (!data.studentNumber || data.studentNumber.trim() === '')) {
+      alert('Studentnummer is verplicht voor studenten');
+      return;
+    }
+
+    if (data.type.toLowerCase() !== 'student' && (!data.username || data.username.trim() === '')) {
+      alert('Gebruikersnaam is verplicht voor niet-studenten');
+      return;
+    }
+
+    // Only validate password for non-student users
+    if (data.type.toLowerCase() !== 'student' && data.password !== data.passwordConfirm) {
       alert('Wachtwoorden komen niet overeen');
       return;
     }
@@ -86,6 +103,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       const result = await updateGebruiker(selectedItem.id, {
         naam: data.name,
         ...(data.password && { wachtwoord: data.password }),
+        ...(data.studentNumber && { studentNummer: data.studentNumber }),
         gebruikerTypeId,
       });
       if (result.success) {
@@ -96,12 +114,15 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       }
     } else {
       // Create new - need username
-      const gebruikerNaam = data.name.toLowerCase().replaceAll(/\s+/g, '');
+      const gebruikerNaam = data.type.toLowerCase() === 'student' && data.studentNumber 
+        ? data.studentNumber 
+        : data.username || data.name.toLowerCase().replaceAll(/\s+/g, '');
       const { createGebruiker } = await import('@/lib/actions/gebruikers');
       const result = await createGebruiker({
         gebruikerNaam,
         naam: data.name,
-        wachtwoord: data.password,
+        studentNummer: data.studentNumber,
+        wachtwoord: data.type.toLowerCase() === 'student' ? '' : data.password,
         gebruikerTypeId,
       });
       if (result.success) {
@@ -201,7 +222,12 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       {/* Edit Modal */}
       <GebruikerEditModal
         isOpen={showEditModal}
-        item={selectedItem ? { name: selectedItem.name, type: selectedItem.type } : null}
+        item={selectedItem ? { 
+          name: selectedItem.name, 
+          type: selectedItem.type, 
+          username: selectedItem.username !== 'N.v.t' ? selectedItem.username : undefined,
+          studentNumber: selectedItem.studentNumber !== 'N.v.t' ? selectedItem.studentNumber : undefined 
+        } : null}
         onConfirm={confirmEdit}
         onCancel={() => {
           setShowEditModal(false);

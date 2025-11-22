@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface DropdownOption {
   value: string;
@@ -24,6 +24,11 @@ export default function Dropdown({
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value || '');
+
+  // Sync internal state with value prop when it changes
+  useEffect(() => {
+    setSelectedValue(value || '');
+  }, [value]);
 
   const handleSelect = (optionValue: string) => {
     setSelectedValue(optionValue);

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Input from '../../components/Input';
 import Table from '../../components/Table';
+import ConfirmModal from '../../components/ConfirmModal';
 import VoorwerpEditModal from '../../components/modals/VoorwerpEditModal';
 import { updateVoorwerp } from '@/lib/actions/voorwerpen';
 
@@ -19,6 +20,8 @@ interface Voorwerp {
 
 interface VoorwerpenClientProps {
     readonly voorwerpen: Voorwerp[];
+    readonly afdelingen: { afdelingId: number; naam: string }[];
+    readonly statuses: { voorwerpStatusId: number; naam: string }[];
 }
 
 interface TableRow {
@@ -33,9 +36,10 @@ interface TableRow {
     statusId: number;
 }
 
-export default function VoorwerpenClient({ voorwerpen }: VoorwerpenClientProps) {
+export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: VoorwerpenClientProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState<TableRow | null>(null);
     const [modalTitle, setModalTitle] = useState('Voorwerp bewerken');
 
@@ -74,12 +78,23 @@ export default function VoorwerpenClient({ voorwerpen }: VoorwerpenClientProps) 
         setShowEditModal(true);
     };
 
+    const handleDelete = (item: TableRow) => {
+        setSelectedItem(item);
+        setShowDeleteModal(true);
+    };
+
     const confirmEdit = async (data: { problem: string; description: string; advice: string; department: string; status: string }) => {
         if (selectedItem) {
+            // Find afdeling and status IDs from names
+            const afdeling = afdelingen.find(a => a.naam.toLowerCase() === data.department.toLowerCase());
+            const status = statuses.find(s => s.naam.toLowerCase() === data.status.toLowerCase());
+
             const result = await updateVoorwerp(selectedItem.volgnummer, {
                 voorwerpBeschrijving: data.description,
                 klachtBeschrijving: data.problem,
-                // Note: advice field doesn't exist in schema, would need to add if needed
+                advies: data.advice,
+                ...(afdeling && { afdelingId: afdeling.afdelingId }),
+                ...(status && { voorwerpStatusId: status.voorwerpStatusId }),
             });
 
             if (result.success) {
@@ -87,6 +102,20 @@ export default function VoorwerpenClient({ voorwerpen }: VoorwerpenClientProps) 
                 setSelectedItem(null);
             } else {
                 alert('Fout bij het bijwerken: ' + result.error);
+            }
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (selectedItem) {
+            // Import delete function dynamically
+            const { deleteVoorwerp } = await import('@/lib/actions/voorwerpen');
+            const result = await deleteVoorwerp(selectedItem.volgnummer);
+            if (result.success) {
+                setShowDeleteModal(false);
+                setSelectedItem(null);
+            } else {
+                alert('Fout bij het verwijderen: ' + result.error);
             }
         }
     };
@@ -110,7 +139,7 @@ export default function VoorwerpenClient({ voorwerpen }: VoorwerpenClientProps) 
 
                 {/* Table */}
                 <div className="py-2.5 overflow-x-auto">
-                    <Table columns={columns} data={filteredData} onEdit={handleEdit} />
+                    <Table columns={columns} data={filteredData} onEdit={handleEdit} onDelete={handleDelete} />
                 </div>
             </div>
 
@@ -121,15 +150,26 @@ export default function VoorwerpenClient({ voorwerpen }: VoorwerpenClientProps) 
                     problem: selectedItem.problem,
                     description: selectedItem.description,
                     advice: '',
-                    department: selectedItem.department,
-                    status: selectedItem.status,
+                    department: selectedItem.department.toLowerCase(),
+                    status: selectedItem.status.toLowerCase(),
                 } : null}
+                afdelingen={afdelingen}
+                statuses={statuses}
                 onConfirm={confirmEdit}
                 onCancel={() => {
                     setShowEditModal(false);
                     setSelectedItem(null);
                 }}
                 title={modalTitle}
+            />
+
+            {/* Delete Modal */}
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                title="Ben je zeker?"
+                description="Dit is onomkeerbaar"
+                onConfirm={confirmDelete}
+                onCancel={() => setShowDeleteModal(false)}
             />
         </>
     );

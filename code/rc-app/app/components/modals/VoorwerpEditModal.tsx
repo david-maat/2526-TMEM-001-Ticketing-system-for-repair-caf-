@@ -14,6 +14,8 @@ interface VoorwerpEditModalProps {
     department: string;
     status: string;
   } | null;
+  afdelingen: { afdelingId: number; naam: string }[];
+  statuses: { voorwerpStatusId: number; naam: string }[];
   onConfirm: (data: {
     problem: string;
     description: string;
@@ -28,6 +30,8 @@ interface VoorwerpEditModalProps {
 export default function VoorwerpEditModal({
   isOpen,
   item,
+  afdelingen,
+  statuses,
   onConfirm,
   onCancel,
   title = 'Voorwerp bewerken'
@@ -46,17 +50,15 @@ export default function VoorwerpEditModal({
     setStatus(item?.status || '');
   }, [item]);
 
-  const departmentOptions = [
-    { value: 'elektronica', label: 'Elektronica' },
-    { value: 'mechanica', label: 'Mechanica' }
-  ];
+  const departmentOptions = afdelingen.map(afd => ({
+    value: afd.naam.toLowerCase(),
+    label: afd.naam
+  }));
 
-  const statusOptions = [
-    { value: 'in-behandeling', label: 'In behandeling' },
-    { value: 'gerepareerd', label: 'Gerepareerd' },
-    { value: 'afgegeven', label: 'Afgegeven' },
-    { value: 'niet-gerepareerd', label: 'Niet gerepareerd' }
-  ];
+  const statusOptions = statuses.map(st => ({
+    value: st.naam.toLowerCase(),
+    label: st.naam
+  }));
 
   const handleConfirm = () => {
     onConfirm({ problem, description, advice, department, status });

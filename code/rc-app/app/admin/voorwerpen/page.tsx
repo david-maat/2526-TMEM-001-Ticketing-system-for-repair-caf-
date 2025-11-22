@@ -1,9 +1,13 @@
 import BackButton from '../../components/BackButton';
 import { getVoorwerpen } from '@/lib/data/voorwerpen';
+import { getAfdelingen } from '@/lib/data/afdelingen';
 import VoorwerpenClient from './VoorwerpenClient';
+import prisma from '@/lib/prisma';
 
 export default async function VoorwerpenPage() {
   const voorwerpen = await getVoorwerpen();
+  const afdelingen = await getAfdelingen();
+  const statuses = await prisma.voorwerpStatus.findMany();
 
   return (
     <div className="min-h-screen bg-[#03091C] flex flex-col p-2.5 lg:p-5">
@@ -16,7 +20,7 @@ export default async function VoorwerpenPage() {
         <div className="w-[100px]" />
       </div>
 
-      <VoorwerpenClient voorwerpen={voorwerpen} />
+      <VoorwerpenClient voorwerpen={voorwerpen} afdelingen={afdelingen} statuses={statuses} />
     </div>
   );
 }

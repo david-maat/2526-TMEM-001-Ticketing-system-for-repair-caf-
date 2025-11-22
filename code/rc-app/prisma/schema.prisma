@@ -20,11 +20,13 @@ model Gebruiker {
   gebruikerId     Int             @id @default(autoincrement())
   gebruikerNaam   String          @unique
   naam            String
+  studentNummer   String?
   wachtwoord      String
   gebruikerTypeId Int
   gebruikerType   GebruikerType   @relation(fields: [gebruikerTypeId], references: [gebruikerTypeId])
   sessies         Sessie[]
   qrLogins        QRLogin[]
+  cafeGebruikers  CafeGebruiker[]
 }
 
 model Sessie {
@@ -63,10 +65,11 @@ model Cafedag {
 }
 
 model CafeGebruiker {
-  cafeGebruikerId Int    @id @default(autoincrement())
+  cafeGebruikerId Int       @id @default(autoincrement())
   gebruikerId     Int
   cafeId          Int
-  cafe            Cafe   @relation(fields: [cafeId], references: [cafeId])
+  gebruiker       Gebruiker @relation(fields: [gebruikerId], references: [gebruikerId])
+  cafe            Cafe      @relation(fields: [cafeId], references: [cafeId])
 }
 
 model KlantType {
@@ -105,11 +108,13 @@ model Voorwerp {
   afdelingId           Int
   voorwerpBeschrijving String?
   klachtBeschrijving   String?
+  advies               String?
   klant                Klant                @relation(fields: [klantId], references: [klantId])
   voorwerpStatus       VoorwerpStatus       @relation(fields: [voorwerpStatusId], references: [voorwerpStatusId])
   afdeling             Afdeling             @relation(fields: [afdelingId], references: [afdelingId])
   cafedagVoorwerp      Cafedagvoorwerp[]
   gebruikteMaterialen  GebruikteMateriaal[]
+  reparatieStatus      ReparatieStatus?
 }
 
 model VoorwerpStatus {
@@ -136,6 +141,8 @@ model GebruikteMateriaal {
 model Materiaal {
   materiaalId         Int                  @id @default(autoincrement())
   naam                String
+  fotoUrl             String?
+  prijs               Int?                 // Price in cents
   gebruikteMaterialen GebruikteMateriaal[]
 }
 
@@ -164,4 +171,12 @@ model PrintJob {
   completedAt    DateTime?
   errorMessage   String?
   printer        Printer   @relation(fields: [printerId], references: [printerId])
+}
+
+model ReparatieStatus {
+  reparatieStatusId Int      @id @default(autoincrement())
+  voorwerpId        Int      @unique
+  status            String   // "volledig_gerepareerd", "gedeeltelijk_gerepareerd", "niet_gerepareerd"
+  createdAt         DateTime @default(now())
+  voorwerp          Voorwerp @relation(fields: [voorwerpId], references: [voorwerpId])
 }
