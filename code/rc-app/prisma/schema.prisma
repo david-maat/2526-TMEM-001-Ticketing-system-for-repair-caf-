@@ -20,11 +20,13 @@ model Gebruiker {
   gebruikerId     Int             @id @default(autoincrement())
   gebruikerNaam   String          @unique
   naam            String
+  studentNummer   String?
   wachtwoord      String
   gebruikerTypeId Int
   gebruikerType   GebruikerType   @relation(fields: [gebruikerTypeId], references: [gebruikerTypeId])
   sessies         Sessie[]
   qrLogins        QRLogin[]
+  cafeGebruikers  CafeGebruiker[]
 }
 
 model Sessie {
@@ -63,10 +65,11 @@ model Cafedag {
 }
 
 model CafeGebruiker {
-  cafeGebruikerId Int    @id @default(autoincrement())
+  cafeGebruikerId Int       @id @default(autoincrement())
   gebruikerId     Int
   cafeId          Int
-  cafe            Cafe   @relation(fields: [cafeId], references: [cafeId])
+  gebruiker       Gebruiker @relation(fields: [gebruikerId], references: [gebruikerId])
+  cafe            Cafe      @relation(fields: [cafeId], references: [cafeId])
 }
 
 model KlantType {

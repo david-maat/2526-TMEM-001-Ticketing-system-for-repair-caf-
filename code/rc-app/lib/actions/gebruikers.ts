@@ -7,6 +7,7 @@ import crypto from 'node:crypto'
 interface CreateGebruikerInput {
   gebruikerNaam: string
   naam: string
+  studentNummer?: string
   wachtwoord: string
   gebruikerTypeId: number
 }
@@ -43,6 +44,7 @@ export async function createGebruiker(data: CreateGebruikerInput) {
         data: {
           gebruikerNaam: data.gebruikerNaam,
           naam: data.naam,
+          studentNummer: data.studentNummer,
           wachtwoord: data.wachtwoord, // In production, hash this password!
           gebruikerTypeId: data.gebruikerTypeId,
         },
@@ -67,6 +69,7 @@ export async function createGebruiker(data: CreateGebruikerInput) {
         data: {
           gebruikerNaam: data.gebruikerNaam,
           naam: data.naam,
+          studentNummer: data.studentNummer,
           wachtwoord: data.wachtwoord, // In production, hash this password!
           gebruikerTypeId: data.gebruikerTypeId,
         },
@@ -90,6 +93,7 @@ export async function updateGebruiker(
   data: {
     gebruikerNaam?: string
     naam?: string
+    studentNummer?: string
     wachtwoord?: string
     gebruikerTypeId?: number
   }
@@ -98,6 +102,7 @@ export async function updateGebruiker(
     const updateData: any = {}
     if (data.gebruikerNaam) updateData.gebruikerNaam = data.gebruikerNaam
     if (data.naam) updateData.naam = data.naam
+    if (data.studentNummer !== undefined) updateData.studentNummer = data.studentNummer
     if (data.wachtwoord) updateData.wachtwoord = data.wachtwoord // In production, hash this!
     if (data.gebruikerTypeId) updateData.gebruikerTypeId = data.gebruikerTypeId
 
