@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import BackButton from '../../../components/BackButton';
 import Button from '../../../components/Button';
 import ProtectedRoute from '../../../components/ProtectedRoute';
-import { sendDeliveryPrintJob, confirmDelivery } from '@/lib/actions/voorwerpen';
+import { confirmDelivery } from '@/lib/actions/voorwerpen';
 
 interface VoorwerpData {
   voorwerpId: number;
@@ -25,7 +25,6 @@ export default function DeliverConfirmPage() {
   const router = useRouter();
   const [voorwerp, setVoorwerp] = useState<VoorwerpData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [printSent, setPrintSent] = useState(false);
 
   useEffect(() => {
     // Retrieve the item data from localStorage
@@ -38,36 +37,13 @@ export default function DeliverConfirmPage() {
     }
   }, [router]);
 
-  // Send print job when component mounts
-  useEffect(() => {
-    if (voorwerp && !printSent) {
-      handlePrint();
-      setPrintSent(true);
-    }
-  }, [voorwerp, printSent]);
-
-  const handlePrint = async () => {
-    if (!voorwerp) return;
-
-    try {
-      // Send print job without changing status
-      const result = await sendDeliveryPrintJob(voorwerp.volgnummer);
-
-      if (!result.success) {
-        console.error('Error sending print job:', result.error);
-      }
-    } catch (error) {
-      console.error('Error in handlePrint:', error);
-    }
-  };
-
   const handleBetaald = async () => {
     if (!voorwerp) return;
 
     setIsLoading(true);
 
     try {
-      // Update status to "Afgeleverd"
+      // Update status to "Afgeleverd" and send print job
       const result = await confirmDelivery(voorwerp.volgnummer);
 
       if (!result.success) {

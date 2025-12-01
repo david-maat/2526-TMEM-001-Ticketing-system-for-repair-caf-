@@ -8,9 +8,10 @@ import { getConnectedPrinters } from '@/lib/data/printers'
 export async function sendPrintJob(data: {
   voorwerpId: number
   volgnummer: string
-  klantNaam: string
-  klantTelefoon?: string | null
+  klantType: string
   afdelingNaam: string
+  voorwerpBeschrijving?: string | null
+  klachtBeschrijving?: string | null
   printData?: any // Additional JSON data (e.g., payment details, materials)
 }) {
   try {
@@ -30,9 +31,10 @@ export async function sendPrintJob(data: {
       printerId: printer.printerId,
       voorwerpId: data.voorwerpId,
       volgnummer: data.volgnummer,
-      klantNaam: data.klantNaam,
-      klantTelefoon: data.klantTelefoon || undefined,
+      klantType: data.klantType,
       afdelingNaam: data.afdelingNaam,
+      voorwerpBeschrijving: data.voorwerpBeschrijving || undefined,
+      klachtBeschrijving: data.klachtBeschrijving || undefined,
       printData: data.printData,
     })
 
@@ -46,9 +48,10 @@ export async function sendPrintJob(data: {
         globalThis.printerIo.to(printer.socketId).emit('print-job', {
           printJobId: result.printJob.printJobId,
           volgnummer: data.volgnummer,
-          klantNaam: data.klantNaam,
-          klantTelefoon: data.klantTelefoon,
+          klantType: data.klantType,
           afdelingNaam: data.afdelingNaam,
+          voorwerpBeschrijving: data.voorwerpBeschrijving,
+          klachtBeschrijving: data.klachtBeschrijving,
           printData: data.printData,
         })
 
@@ -78,9 +81,10 @@ export async function sendPrintJob(data: {
 export async function broadcastPrintJob(data: {
   voorwerpId: number
   volgnummer: string
-  klantNaam: string
-  klantTelefoon?: string | null
+  klantType: string
   afdelingNaam: string
+  voorwerpBeschrijving?: string | null
+  klachtBeschrijving?: string | null
   printData?: any // Additional JSON data (e.g., payment details, materials)
 }) {
   try {
@@ -99,9 +103,10 @@ export async function broadcastPrintJob(data: {
         printerId: printer.printerId,
         voorwerpId: data.voorwerpId,
         volgnummer: data.volgnummer,
-        klantNaam: data.klantNaam,
-        klantTelefoon: data.klantTelefoon || undefined,
+        klantType: data.klantType,
         afdelingNaam: data.afdelingNaam,
+        voorwerpBeschrijving: data.voorwerpBeschrijving || undefined,
+        klachtBeschrijving: data.klachtBeschrijving || undefined,
         printData: data.printData,
       })
 
@@ -114,9 +119,10 @@ export async function broadcastPrintJob(data: {
             globalThis.printerIo.to(printer.socketId).emit('print-job', {
               printJobId: result.printJob.printJobId,
               volgnummer: data.volgnummer,
-              klantNaam: data.klantNaam,
-              klantTelefoon: data.klantTelefoon,
+              klantType: data.klantType,
               afdelingNaam: data.afdelingNaam,
+              voorwerpBeschrijving: data.voorwerpBeschrijving,
+              klachtBeschrijving: data.klachtBeschrijving,
               printData: data.printData,
             })
 

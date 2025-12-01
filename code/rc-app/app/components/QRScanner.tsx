@@ -63,8 +63,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
       // Prevent multiple scans
       console.log('Processing scan...');
       setHasScanned(true);
-      // Stop the camera stream before calling onScan
-      stopCamera();
+      // Call onScan and let parent component handle closing
       onScan(result.text);
     }
   };
@@ -110,20 +109,26 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   };
 
   const stopCamera = () => {
-    // Find the video element and stop all tracks
-    const videoElement = document.getElementById('qr-video') as HTMLVideoElement;
-    if (videoElement?.srcObject) {
-      const stream = videoElement.srcObject as MediaStream;
-      for (const track of stream.getTracks()) {
-        track.stop();
-        console.log('Stopped track:', track.kind);
+    try {
+      // Find the video element and stop all tracks
+      const videoElement = document.getElementById('qr-video') as HTMLVideoElement;
+      if (videoElement?.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
+        const tracks = stream.getTracks();
+        for (const track of tracks) {
+          if (track.readyState === 'live') {
+            track.stop();
+            console.log('Stopped track:', track.kind);
+          }
+        }
+        videoElement.srcObject = null;
       }
-      videoElement.srcObject = null;
+    } catch (err) {
+      console.error('Error stopping camera:', err);
     }
   };
 
   const handleClose = () => {
-    stopCamera();
     onClose();
   };
 
@@ -217,8 +222,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
             <div className="mb-4 rounded-lg overflow-hidden bg-black aspect-square">
               <QrReader
                 constraints={{ 
-                  facingMode: 'environment',
-                  aspectRatio: 1
+                  facingMode: 'environment'
                 }}
                 onResult={handleScan}
                 videoId="qr-video"

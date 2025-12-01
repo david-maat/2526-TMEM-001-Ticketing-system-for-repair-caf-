@@ -91,8 +91,8 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
     // Map type name to ID
     const typeMap: { [key: string]: number } = {
       'admin': 1,
-      'student': 2,
-      'baliemedewerker': 3
+      'student': 3,
+      'baliemedewerker': 2
     };
 
     const gebruikerTypeId = typeMap[data.type.toLowerCase()] || 2;
@@ -114,8 +114,8 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       }
     } else {
       // Create new - need username
-      const gebruikerNaam = data.type.toLowerCase() === 'student' && data.studentNumber 
-        ? data.studentNumber 
+      const gebruikerNaam = data.type.toLowerCase() === 'student' && data.studentNumber
+        ? data.studentNumber
         : data.username || data.name.toLowerCase().replaceAll(/\s+/g, '');
       const { createGebruiker } = await import('@/lib/actions/gebruikers');
       const result = await createGebruiker({
@@ -222,11 +222,11 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       {/* Edit Modal */}
       <GebruikerEditModal
         isOpen={showEditModal}
-        item={selectedItem ? { 
-          name: selectedItem.name, 
-          type: selectedItem.type, 
+        item={selectedItem ? {
+          name: selectedItem.name,
+          type: selectedItem.type,
           username: selectedItem.username !== 'N.v.t' ? selectedItem.username : undefined,
-          studentNumber: selectedItem.studentNumber !== 'N.v.t' ? selectedItem.studentNumber : undefined 
+          studentNumber: selectedItem.studentNumber !== 'N.v.t' ? selectedItem.studentNumber : undefined
         } : null}
         onConfirm={confirmEdit}
         onCancel={() => {

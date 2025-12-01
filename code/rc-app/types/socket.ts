@@ -19,13 +19,12 @@ export interface NextApiResponseServerIO extends NextApiResponse {
 export interface PrintJobData {
   printJobId: number
   volgnummer: string
-  klantNaam: string
-  klantTelefoon?: string | null
+  klantType: string
   afdelingNaam: string
+  voorwerpBeschrijving?: string | null
+  klachtBeschrijving?: string | null
   printData?: {
     type?: 'registration' | 'delivery'
-    voorwerpBeschrijving?: string
-    klachtBeschrijving?: string
     materials?: Array<{
       naam: string
       aantal: number

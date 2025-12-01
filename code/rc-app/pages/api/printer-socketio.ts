@@ -75,6 +75,17 @@ const printerIoHandler = async (req: NextApiRequest, res: NextApiResponseServerI
               printerId: printer.printerId,
               status: 'pending',
             },
+            include: {
+              voorwerp: {
+                include: {
+                  klant: {
+                    include: {
+                      klantType: true,
+                    },
+                  },
+                },
+              },
+            },
             orderBy: {
               createdAt: 'asc',
             },
@@ -86,9 +97,10 @@ const printerIoHandler = async (req: NextApiRequest, res: NextApiResponseServerI
               socket.emit('print-job', {
                 printJobId: job.printJobId,
                 volgnummer: job.volgnummer,
-                klantNaam: job.klantNaam,
-                klantTelefoon: job.klantTelefoon,
+                klantType: job.voorwerp.klant.klantType.naam,
                 afdelingNaam: job.afdelingNaam,
+                voorwerpBeschrijving: job.voorwerp.voorwerpBeschrijving,
+                klachtBeschrijving: job.voorwerp.klachtBeschrijving,
                 printData: job.printData,
               })
 

@@ -84,9 +84,10 @@ export async function createPrintJob(data: {
   printerId: number
   voorwerpId: number
   volgnummer: string
-  klantNaam: string
-  klantTelefoon?: string
+  klantType: string
   afdelingNaam: string
+  voorwerpBeschrijving?: string
+  klachtBeschrijving?: string
   printData?: any // Additional JSON data (e.g., payment details, materials)
 }) {
   try {
@@ -95,8 +96,8 @@ export async function createPrintJob(data: {
         printerId: data.printerId,
         voorwerpId: data.voorwerpId,
         volgnummer: data.volgnummer,
-        klantNaam: data.klantNaam,
-        klantTelefoon: data.klantTelefoon || null,
+        klantNaam: data.klantType, // Store klantType in klantNaam field temporarily
+        klantTelefoon: null, // No longer used
         afdelingNaam: data.afdelingNaam,
         printData: data.printData || null,
         status: 'pending',
