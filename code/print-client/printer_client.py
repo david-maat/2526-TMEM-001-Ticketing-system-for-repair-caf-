@@ -6,15 +6,17 @@ Connects to the Next.js Socket.IO server to receive print jobs
 This is the main entry point that orchestrates the different components.
 """
 
+import os
 import sys
 import logging
 import signal
 import threading
 from typing import Dict, Any
+from dotenv import load_dotenv
 
-from config import PrinterConfig, setup_logging
 from socket_client import SocketIOClient
-from printer import ThermalPrinter, PrinterCommunicationError
+from printer_base import PrinterCommunicationError
+from printer_factory import create_printer
 from ticket_formatter import TicketFormatter
 
 logger = logging.getLogger('PrinterClient')
@@ -26,7 +28,7 @@ class PrintJobHandler:
     def __init__(
         self,
         socket_client: SocketIOClient,
-        printer: ThermalPrinter,
+        printer,  # BasePrinter
         formatter: TicketFormatter
     ):
         """
@@ -34,7 +36,7 @@ class PrintJobHandler:
         
         Args:
             socket_client: Socket.IO client for server communication
-            printer: Thermal printer for physical printing
+            printer: Printer instance (Network or USB)
             formatter: Ticket formatter for ESC/POS generation
         """
         self.socket_client = socket_client
@@ -97,28 +99,94 @@ class PrintJobHandler:
             self.socket_client.emit_print_failed(print_job_id, error_msg)
 
 
+def setup_logging(debug: bool = False):
+    """Setup logging configuration"""
+    level = logging.DEBUG if debug else logging.INFO
+    
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # Disable urllib3 SSL warnings in development if SSL verification is disabled
+    if not debug:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
 def main():
     """Main entry point"""
-    # Load configuration
-    config = PrinterConfig.from_env()
-    setup_logging(config.debug)
+    # Load environment variables
+    load_dotenv()
+    
+    # Get configuration from environment
+    socketio_url = os.getenv('SOCKETIO_URL', 'http://localhost:3000')
+    printer_id = os.getenv('PRINTER_NAME', 'Printer-01')
+    connection_type = os.getenv('CONNECTION_TYPE', 'network').lower()
+    
+    # Network printer settings
+    printer_ip = os.getenv('PRINTER_IP')
+    printer_port = int(os.getenv('PRINTER_PORT', '9100'))
+    
+    # USB/Windows printer settings
+    windows_printer_name = os.getenv('WINDOWS_PRINTER_NAME')
+    usb_vendor_id = int(os.getenv('USB_VENDOR_ID', '0x0519'), 16)
+    usb_product_id = int(os.getenv('USB_PRODUCT_ID', '0x0003'), 16)
+    usb_interface = int(os.getenv('USB_INTERFACE', '0'))
+    usb_in_ep = int(os.getenv('USB_IN_EP', '0x81'), 16)
+    usb_out_ep = int(os.getenv('USB_OUT_EP', '0x03'), 16)
+    
+    ssl_verify = os.getenv('SSL_VERIFY').lower() in ('true', '1', 'yes')
+    debug = os.getenv('DEBUG', 'true').lower() in ('true', '1', 'yes')
+    
+    # Setup logging
+    setup_logging(debug)
     
     logger.info('='*60)
     logger.info('Repair Café Printer Client')
     logger.info('='*60)
+    logger.info('Configuration:')
+    logger.info(f'  Server URL: {socketio_url}')
+    logger.info(f'  Printer ID: {printer_id}')
+    logger.info(f'  Connection Type: {connection_type}')
+    if connection_type == 'network':
+        logger.info(f'  Printer IP: {printer_ip}')
+        logger.info(f'  Printer Port: {printer_port}')
+    elif connection_type == 'usb':
+        if windows_printer_name:
+            logger.info(f'  Windows Printer: {windows_printer_name}')
+        else:
+            logger.info(f'  USB Vendor ID: {hex(usb_vendor_id)}')
+            logger.info(f'  USB Product ID: {hex(usb_product_id)}')
+            logger.info(f'  USB Interface: {usb_interface}')
+            logger.info(f'  USB In EP: {hex(usb_in_ep)}')
+            logger.info(f'  USB Out EP: {hex(usb_out_ep)}')
+    logger.info(f'  SSL Verify: {ssl_verify}')
+    logger.info(f'  Debug: {debug}')
+    logger.info('='*60)
     
     # Initialize components
     socket_client = SocketIOClient(
-        server_url=config.socketio_url,
-        printer_name=config.printer_name,
-        ssl_verify=config.ssl_verify,
-        debug=config.debug
+        server_url=socketio_url,
+        printer_name=printer_id,
+        ssl_verify=ssl_verify,
+        debug=debug
     )
     
-    printer = ThermalPrinter(
-        printer_ip=config.printer_ip,
-        printer_port=config.printer_port
+    # Create printer based on connection type
+    printer = create_printer(
+        connection_type=connection_type,
+        printer_ip=printer_ip,
+        printer_port=printer_port,
+        printer_name=windows_printer_name,
+        usb_vendor_id=usb_vendor_id,
+        usb_product_id=usb_product_id,
+        usb_interface=usb_interface,
+        usb_in_ep=usb_in_ep,
+        usb_out_ep=usb_out_ep
     )
+    
+    logger.info(f'Printer initialized: {printer.get_connection_info()}')
     
     formatter = TicketFormatter()
     

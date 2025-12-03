@@ -115,6 +115,7 @@ model Voorwerp {
   cafedagVoorwerp      Cafedagvoorwerp[]
   gebruikteMaterialen  GebruikteMateriaal[]
   reparatieStatus      ReparatieStatus?
+  printJobs            PrintJob[]
 }
 
 model VoorwerpStatus {
@@ -171,6 +172,7 @@ model PrintJob {
   completedAt    DateTime?
   errorMessage   String?
   printer        Printer   @relation(fields: [printerId], references: [printerId])
+  voorwerp       Voorwerp  @relation(fields: [voorwerpId], references: [voorwerpId])
 }
 
 model ReparatieStatus {

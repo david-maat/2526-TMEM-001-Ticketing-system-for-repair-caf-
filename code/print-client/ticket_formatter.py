@@ -81,18 +81,24 @@ class TicketFormatter:
         cmd += self.GS + b'!\x00'  # Normal size
         
         if is_delivery:
-            cmd += b'DELIVERY RECEIPT\n'
+            cmd += b'AFLEVERINGSBON\n'
         else:
-            cmd += b'TICKET\n'
+            cmd += b'VOLGTICKET\n'
         
         cmd += self.ESC + b'E\x00'  # Bold off
         cmd += b'\n'
         
         return cmd
     
-    def _format_separator(self) -> bytes:
+    def _format_separator(self, char: str = '=', newline_before: bool = False, newline_after: bool = True) -> bytes:
         """Format separator line"""
-        return b'=' * 42 + b'\n\n'
+        cmd = b''
+        if newline_before:
+            cmd += b'\n'
+        cmd += char.encode(self.encoding) * 42 + b'\n'
+        if newline_after:
+            cmd += b'\n'
+        return cmd
     
     def _format_ticket_details(
         self,
@@ -184,32 +190,37 @@ class TicketFormatter:
     
     def _format_materials_section(self, print_data: Dict[str, Any]) -> bytes:
         """Format materials and pricing section for delivery receipts"""
-        cmd = b'================================\n'
+        cmd = self._format_separator(newline_after=False)         
         cmd += self.ESC + b'E\x01'  # Bold on
         cmd += b'GEBRUIKTE MATERIALEN\n'
         cmd += self.ESC + b'E\x00'  # Bold off
-        cmd += b'================================\n'
+        cmd += self._format_separator(newline_after=False)
         
         materials = print_data.get('materials', [])
         if materials:
             for material in materials:
                 naam = material.get('naam', 'Unknown')
                 aantal = material.get('aantal', 0)
-                prijs = material.get('prijs', 0)
+                prijs_cents = material.get('prijsPerStuk', 0)
                 
                 # Material name, quantity and price on one line
                 # Keep within 32 chars to fit inside the separator
-                line = f'{naam[:20]:<20} {aantal:>2}x € {prijs:>5.2f}'.encode(self.encoding, errors='replace')
+                # Format cents as euros using integer arithmetic: 150 cents -> €1.50
+                euros = prijs_cents // 100
+                cents = prijs_cents % 100
+                line = f'{naam[:29]:<29} {aantal:>2}x €{euros:>3}.{cents:02d}'.encode(self.encoding, errors='replace')
                 cmd += line + b'\n'
         else:
             cmd += b'Geen materialen gebruikt\n'
         
-        cmd += b'================================\n'
-        
+        cmd += self._format_separator(char='-')         
         # Totals
-        total_price = print_data.get('totalPrice', 0)
+        total_price_cents = print_data.get('totalPrice', 0)
         cmd += self.ESC + b'E\x01'  # Bold on
-        cmd += f'TOTAAL:          € {total_price:>6.2f}\n'.encode(self.encoding, errors='replace')
+        # Format cents as euros using integer arithmetic: 150 cents -> €1.50
+        euros = total_price_cents // 100
+        cents = total_price_cents % 100
+        cmd += f'{"TOTAAL":<29} {"":>2}  €{euros:>3}.{cents:02d}\n'.encode(self.encoding, errors='replace')
         cmd += self.ESC + b'E\x00'  # Bold off
         cmd += b'\n'
         

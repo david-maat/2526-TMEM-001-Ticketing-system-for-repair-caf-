@@ -1,5 +1,5 @@
 """
-Printer module for TM-T88IV thermal printer communication
+Network printer implementation for TM-T88IV thermal printer
 Handles low-level printer communication via network socket
 """
 
@@ -7,20 +7,17 @@ import socket
 import logging
 from typing import Optional
 
-logger = logging.getLogger('PrinterClient.Printer')
+from printer_base import BasePrinter, PrinterCommunicationError
+
+logger = logging.getLogger('PrinterClient.NetworkPrinter')
 
 
-class PrinterCommunicationError(Exception):
-    """Exception raised for printer communication errors"""
-    pass
-
-
-class ThermalPrinter:
-    """Handler for TM-T88IV thermal printer communication"""
+class NetworkPrinter(BasePrinter):
+    """Network-based thermal printer implementation via TCP/IP socket"""
     
-    def __init__(self, printer_ip: str, printer_port: int):
+    def __init__(self, printer_ip: str, printer_port: int = 9100):
         """
-        Initialize printer connection parameters
+        Initialize network printer connection parameters
         
         Args:
             printer_ip: IP address of the printer
@@ -29,6 +26,10 @@ class ThermalPrinter:
         self.printer_ip = printer_ip
         self.printer_port = printer_port
         self.timeout = 5  # Socket timeout in seconds
+    
+    def get_connection_info(self) -> str:
+        """Get network connection information"""
+        return f"Network: {self.printer_ip}:{self.printer_port}"
     
     def send_raw_data(self, data: bytes) -> None:
         """
@@ -92,3 +93,7 @@ class ThermalPrinter:
         except Exception as e:
             logger.warning(f'Printer connection test failed: {e}')
             return False
+
+
+# Backward compatibility alias
+ThermalPrinter = NetworkPrinter
