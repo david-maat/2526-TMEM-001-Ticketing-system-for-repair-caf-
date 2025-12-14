@@ -143,12 +143,11 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
                         <Input
                             label="Zoeken"
                             placeholder="Repaircafe 2025"
-                            required
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="primary" className="mt-6" onClick={handleAdd}>
+                    <Button variant="primary" onClick={handleAdd}>
                         +
                     </Button>
                 </div>

@@ -90,12 +90,11 @@ export default function AfdelingenClient({ afdelingen }: AfdelingenClientProps) 
                         <Input
                             label="Zoeken"
                             placeholder="Elektronica"
-                            required
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="primary" className="mt-6" onClick={handleAdd}>
+                    <Button variant="primary" onClick={handleAdd}>
                         +
                     </Button>
                 </div>

@@ -130,7 +130,6 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
                         <Input
                             label="Zoeken"
                             placeholder="Volgnummer of beschrijving"
-                            required
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />

@@ -24,8 +24,8 @@ export default function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="w-[547px] rounded-2xl bg-[#ED532A] p-8 flex flex-col gap-2.5">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onCancel}>
+      <div className="w-[547px] rounded-2xl bg-[#ED532A] p-8 flex flex-col gap-2.5" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-white font-inter text-xl font-bold leading-[30px] tracking-[-0.4px]">
           {title}
         </h2>

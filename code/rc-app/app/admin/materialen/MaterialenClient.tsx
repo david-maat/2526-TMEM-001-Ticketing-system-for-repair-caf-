@@ -143,12 +143,11 @@ export default function MaterialenClient({ materialen }: MaterialenClientProps) 
                         <Input
                             label="Zoeken"
                             placeholder="Bout"
-                            required
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="primary" className="mt-6" onClick={handleAdd}>
+                    <Button variant="primary" onClick={handleAdd}>
                         +
                     </Button>
                 </div>

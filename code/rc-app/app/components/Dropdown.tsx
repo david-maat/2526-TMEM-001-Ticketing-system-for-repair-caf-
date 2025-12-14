@@ -45,7 +45,7 @@ export default function Dropdown({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between gap-0.5 w-full px-3.5 py-2 rounded-md bg-white text-black font-open-sans text-2xl font-normal cursor-pointer hover:bg-gray-50"
+        className={`flex items-center justify-between gap-0.5 w-full px-3.5 py-2 rounded-md ${isOpen ? 'rounded-b-none' : ''} bg-white text-black font-open-sans text-2xl font-normal cursor-pointer hover:bg-gray-50`}
       >
         <span>{selectedLabel}</span>
         <svg
