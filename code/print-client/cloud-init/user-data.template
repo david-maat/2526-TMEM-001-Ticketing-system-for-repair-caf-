@@ -1,0 +1,112 @@
+#cloud-config
+# Cloud-init configuration for Repair Café Print Client
+# This file configures the Raspberry Pi on first boot
+
+# Set hostname
+hostname: printclient
+
+# Set timezone
+timezone: Europe/Brussels
+
+# Manage /etc/hosts
+manage_etc_hosts: true
+
+# Users configuration
+users:
+  - name: pi
+    groups: users,adm,dialout,audio,plugdev,netdev,video,lp,sudo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    plain_text_passwd: raspberry
+    chpasswd: { expire: false }
+
+# Package management
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+# Packages to install
+packages:
+  - python3
+  - python3-pip
+  - python3-venv
+  - libusb-1.0-0
+  - libusb-1.0-0-dev
+  - cups
+  - libcups2-dev
+  - git
+
+# Write files to disk
+write_files:
+  # Print client systemd service
+  - path: /etc/systemd/system/print-client.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Repair Café Print Client
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=pi
+      WorkingDirectory=/opt/print-client
+      Environment="PATH=/opt/print-client/venv/bin:/usr/local/bin:/usr/bin:/bin"
+      ExecStart=/opt/print-client/venv/bin/python printer_client.py
+      Restart=always
+      RestartSec=10
+      StandardOutput=journal
+      StandardError=journal
+
+      # Security settings
+      NoNewPrivileges=true
+      PrivateTmp=true
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # Environment configuration (will be replaced by build script)
+  - path: /opt/print-client/.env
+    permissions: "0644"
+    owner: pi:pi
+    content: |
+      SOCKETIO_URL={{SOCKETIO_URL}}
+      PRINTER_NAME={{PRINTER_NAME}}
+      PRINTER_IP={{PRINTER_IP}}
+      PRINTER_PORT={{PRINTER_PORT}}
+      SSL_VERIFY={{SSL_VERIFY}}
+      DEBUG={{DEBUG}}
+
+# Run commands on first boot
+runcmd:
+  # Clone the repository
+  - mkdir -p /opt
+  - cd /opt && git clone {{REPO_URL}} repo
+  - cp -r /opt/repo/code/print-client /opt
+  - chown -R pi:pi /opt/print-client
+
+  # Set up Python virtual environment
+  - sudo -u pi python3 -m venv /opt/print-client/venv
+  - sudo -u pi /opt/print-client/venv/bin/pip install --upgrade pip
+  - sudo -u pi /opt/print-client/venv/bin/pip install -r /opt/print-client/requirements.txt
+
+  # Enable and start the service
+  - systemctl daemon-reload
+  - systemctl enable print-client.service
+  - systemctl start print-client.service
+
+# Final message
+final_message: |
+  Repair Café Print Client is now configured and running!
+
+  System Information:
+  - Hostname: printclient
+  - Default User: pi
+  - Default Password: raspberry
+
+  Service Status:
+  - Run 'sudo systemctl status print-client' to check the service
+  - Run 'sudo journalctl -u print-client -f' to view logs
+
+  Cloud-init finished at $TIMESTAMP after $UPTIME seconds
