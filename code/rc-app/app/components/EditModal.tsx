@@ -25,7 +25,7 @@ export default function EditModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onCancel}>
-      <div className="w-full max-w-[658px] rounded-2xl bg-[#ED532A] p-8 flex flex-col gap-2.5" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-[658px] rounded-2xl bg-[#05293D] p-8 flex flex-col gap-2.5" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-white font-inter text-xl font-bold leading-[30px] tracking-[-0.4px]">
           {title}
         </h2>

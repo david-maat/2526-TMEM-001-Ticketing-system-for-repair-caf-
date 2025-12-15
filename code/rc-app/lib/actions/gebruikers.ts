@@ -9,6 +9,7 @@ interface CreateGebruikerInput {
   naam: string
   wachtwoord: string
   gebruikerTypeId: number
+  studentNummer?: string
 }
 
 export async function createGebruiker(data: CreateGebruikerInput) {
@@ -45,6 +46,7 @@ export async function createGebruiker(data: CreateGebruikerInput) {
           naam: data.naam,
           wachtwoord: data.wachtwoord, // In production, hash this password!
           gebruikerTypeId: data.gebruikerTypeId,
+          ...(data.studentNummer && { studentNummer: data.studentNummer })
         },
         include: {
           gebruikerType: true,
@@ -69,6 +71,7 @@ export async function createGebruiker(data: CreateGebruikerInput) {
           naam: data.naam,
           wachtwoord: data.wachtwoord, // In production, hash this password!
           gebruikerTypeId: data.gebruikerTypeId,
+          ...(data.studentNummer && { studentNummer: data.studentNummer })
         },
         include: {
           gebruikerType: true,
@@ -92,6 +95,7 @@ export async function updateGebruiker(
     naam?: string
     wachtwoord?: string
     gebruikerTypeId?: number
+    studentNummer?: string
   }
 ) {
   try {
@@ -100,6 +104,7 @@ export async function updateGebruiker(
     if (data.naam) updateData.naam = data.naam
     if (data.wachtwoord) updateData.wachtwoord = data.wachtwoord // In production, hash this!
     if (data.gebruikerTypeId) updateData.gebruikerTypeId = data.gebruikerTypeId
+    if (data.studentNummer) updateData.studentNummer = data.studentNummer
 
     const gebruiker = await prisma.gebruiker.update({
       where: { gebruikerId },

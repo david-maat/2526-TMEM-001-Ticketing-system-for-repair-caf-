@@ -1,4 +1,72 @@
 import React from 'react';
+import { Edit, Trash2 } from "@deemlol/next-icons";
+
+function formatDateDDMMYYYY(date: Date): string {
+  if (Number.isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).padStart(4, '0');
+  return `${day}/${month}/${year}`;
+}
+
+function getRowKey(item: Record<string, any>): string {
+  const candidate = item.id ?? item.uuid ?? item.key ?? item.ID ?? item._id;
+  if (candidate != null && (typeof candidate === 'string' || typeof candidate === 'number')) {
+    return String(candidate);
+  }
+
+  try {
+    return JSON.stringify(item);
+  } catch {
+    return '[row]';
+  }
+}
+
+function toCellContent(value: unknown): React.ReactNode {
+  if (
+    value == null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'bigint'
+  ) {
+    return value as any;
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  if (value instanceof Date) {
+    return formatDateDDMMYYYY(value);
+  }
+
+  if (React.isValidElement(value)) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => {
+        if (v instanceof Date) return formatDateDDMMYYYY(v);
+        if (v == null) return '';
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'bigint') return String(v);
+        if (typeof v === 'boolean') return v ? 'true' : 'false';
+        try {
+          return JSON.stringify(v);
+        } catch {
+          return '[item]';
+        }
+      })
+      .filter((s) => s !== '')
+      .join(', ');
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '[value]';
+  }
+}
 
 interface TableColumn {
   key: string;
@@ -21,7 +89,7 @@ export default function Table({
   onDelete,
   showActions = true,
   renderCell
-}: TableProps) {
+}: Readonly<TableProps>) {
   return (
     <div className="w-full rounded border border-[#5B5B5B] bg-[#363636] overflow-hidden">
       <table className="w-full">
@@ -52,7 +120,7 @@ export default function Table({
         </thead>
         <tbody>
           {data.map((item, index) => (
-            <tr key={index} className={index % 2 === 0 ? 'bg-[#F76B3D]' : 'bg-transparent'}>
+            <tr key={getRowKey(item)} className={index % 2 === 0 ? 'bg-[#F76B3D]' : 'bg-transparent'}>
               {columns.map((column) => (
                 <td
                   key={column.key}
@@ -60,7 +128,11 @@ export default function Table({
                 >
                   <div className="px-3 py-2.5">
                     <span className="text-black font-inter text-xs font-normal leading-[130%]">
-                      {renderCell ? renderCell(column.key, item[column.key], item) : item[column.key]}
+                      {toCellContent(
+                        renderCell
+                          ? renderCell(column.key, item[column.key], item)
+                          : item[column.key]
+                      )}
                     </span>
                   </div>
                 </td>
@@ -70,39 +142,12 @@ export default function Table({
                   <div className="px-3 py-2.5 flex justify-end items-center gap-2">
                     {onEdit && (
                       <button onClick={() => onEdit(item)} className="cursor-pointer">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M14.06 9L15 9.94L5.92 19H5V18.08L14.06 9ZM17.66 3C17.41 3 17.15 3.1 16.96 3.29L15.13 5.12L18.88 8.87L20.71 7.04C21.1 6.65 21.1 6 20.71 5.63L18.37 3.29C18.17 3.09 17.92 3 17.66 3ZM14.06 6.19L3 17.25V21H6.75L17.81 9.94L14.06 6.19Z"
-                            fill="black"
-                          />
-                        </svg>
+                        <Edit size={24} color="#000000" />
                       </button>
                     )}
                     {onDelete && (
                       <button onClick={() => onDelete(item)} className="cursor-pointer">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M18 5V19C18 19.5 17.5 20 17 20H12H7C6.5 20 6 19.5 6 19V5"
-                            stroke="black"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M4 5H20"
-                            stroke="black"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M10 4H14M10 9V16M14 9V16"
-                            stroke="black"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <Trash2 size={24} color="#000000" />
                       </button>
                     )}
                   </div>

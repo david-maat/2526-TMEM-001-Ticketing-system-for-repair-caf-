@@ -9,6 +9,7 @@ import QRLoginModal from '../../components/QRLoginModal';
 import GebruikerEditModal from '../../components/modals/GebruikerEditModal';
 import { generateQRLoginToken } from '@/lib/actions/gebruikers';
 import type { GebruikerWithType } from '@/lib/types';
+import { getGebruikerTypeIdFromKey, getKeyFromDbName } from '@/lib/constants/gebruikers';
 
 interface TableRow {
   id: number;
@@ -72,30 +73,23 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       return;
     }
 
-    if (data.type.toLowerCase() === 'student' && (!data.studentNumber || data.studentNumber.trim() === '')) {
+    if (data.type === 'student' && (!data.studentNumber || data.studentNumber.trim() === '')) {
       alert('Studentnummer is verplicht voor studenten');
       return;
     }
 
-    if (data.type.toLowerCase() !== 'student' && (!data.username || data.username.trim() === '')) {
+    if (data.type !== 'student' && (!data.username || data.username.trim() === '')) {
       alert('Gebruikersnaam is verplicht voor niet-studenten');
       return;
     }
 
     // Only validate password for non-student users
-    if (data.type.toLowerCase() !== 'student' && data.password !== data.passwordConfirm) {
+    if (data.type !== 'student' && data.password !== data.passwordConfirm) {
       alert('Wachtwoorden komen niet overeen');
       return;
     }
 
-    // Map type name to ID
-    const typeMap: { [key: string]: number } = {
-      'admin': 1,
-      'student': 3,
-      'baliemedewerker': 2
-    };
-
-    const gebruikerTypeId = typeMap[data.type.toLowerCase()] || 2;
+    const gebruikerTypeId = getGebruikerTypeIdFromKey(data.type);
 
     if (selectedItem) {
       // Update existing
@@ -114,7 +108,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       }
     } else {
       // Create new - need username
-      const gebruikerNaam = data.type.toLowerCase() === 'student' && data.studentNumber
+      const gebruikerNaam = data.type === 'student' && data.studentNumber
         ? data.studentNumber
         : data.username || data.name.toLowerCase().replaceAll(/\s+/g, '');
       const { createGebruiker } = await import('@/lib/actions/gebruikers');
@@ -122,7 +116,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
         gebruikerNaam,
         naam: data.name,
         studentNummer: data.studentNumber,
-        wachtwoord: data.type.toLowerCase() === 'student' ? '' : data.password,
+        wachtwoord: data.type === 'student' ? '' : data.password,
         gebruikerTypeId,
       });
       if (result.success) {
@@ -223,7 +217,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
         isOpen={showEditModal}
         item={selectedItem ? {
           name: selectedItem.name,
-          type: selectedItem.type,
+          type: getKeyFromDbName(selectedItem.type),
           username: selectedItem.username !== 'N.v.t' ? selectedItem.username : undefined,
           studentNumber: selectedItem.studentNumber !== 'N.v.t' ? selectedItem.studentNumber : undefined
         } : null}

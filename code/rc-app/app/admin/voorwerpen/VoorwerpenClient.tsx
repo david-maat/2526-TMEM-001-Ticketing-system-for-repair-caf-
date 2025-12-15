@@ -14,6 +14,7 @@ interface Voorwerp {
     aanmeldingsTijd: Date;
     voorwerpBeschrijving: string | null;
     klachtBeschrijving: string | null;
+    advies?: string | null;
     afdeling: { naam: string; afdelingId: number };
     voorwerpStatus: { naam: string; voorwerpStatusId: number };
 }
@@ -31,6 +32,7 @@ interface TableRow {
     department: string;
     description: string;
     problem: string;
+    advice: string;
     status: string;
     departmentId: number;
     statusId: number;
@@ -53,14 +55,22 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
         { key: 'status', header: 'Status' }
     ];
 
+    const renderCell = (key: string, value: any) => {
+        if ((key === 'description' || key === 'problem') && (!value || String(value).trim() === '')) {
+            return '-';
+        }
+        return value;
+    };
+
     // Transform data for table
     const tableData: TableRow[] = voorwerpen.map((voorwerp) => ({
         volgnummer: voorwerp.volgnummer,
         registrationDate: new Date(voorwerp.aanmeldingsDatum).toLocaleDateString('nl-NL'),
         registrationTime: new Date(voorwerp.aanmeldingsTijd).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }),
         department: voorwerp.afdeling.naam,
-        description: voorwerp.voorwerpBeschrijving || '-',
-        problem: voorwerp.klachtBeschrijving || '-',
+        description: voorwerp.voorwerpBeschrijving || '',
+        problem: voorwerp.klachtBeschrijving || '',
+        advice: voorwerp.advies || '',
         status: voorwerp.voorwerpStatus.naam,
         departmentId: voorwerp.afdeling.afdelingId,
         statusId: voorwerp.voorwerpStatus.voorwerpStatusId,
@@ -68,8 +78,8 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
 
     const filteredData = tableData.filter((item) =>
         item.volgnummer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.problem.toLowerCase().includes(searchTerm.toLowerCase())
+        (item.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.problem || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleEdit = (item: TableRow) => {
@@ -138,7 +148,13 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
 
                 {/* Table */}
                 <div className="py-2.5 overflow-x-auto">
-                    <Table columns={columns} data={filteredData} onEdit={handleEdit} onDelete={handleDelete} />
+                        <Table
+                        columns={columns}
+                        data={filteredData}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        renderCell={renderCell}
+                        />
                 </div>
             </div>
 
@@ -148,7 +164,7 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
                 item={selectedItem ? {
                     problem: selectedItem.problem,
                     description: selectedItem.description,
-                    advice: '',
+                    advice: selectedItem.advice,
                     department: selectedItem.department.toLowerCase(),
                     status: selectedItem.status.toLowerCase(),
                 } : null}

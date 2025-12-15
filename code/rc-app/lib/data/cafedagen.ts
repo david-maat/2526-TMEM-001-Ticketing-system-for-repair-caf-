@@ -1,8 +1,7 @@
 import prisma from '@/lib/prisma'
-import { cache } from 'react'
 
 // GET all cafedagen with their cafe info
-export const getCafedagen = cache(async () => {
+export async function getCafedagen() {
   try {
     const cafedagen = await prisma.cafedag.findMany({
       include: {
@@ -17,10 +16,10 @@ export const getCafedagen = cache(async () => {
     console.error('Error fetching cafedagen:', error)
     throw new Error('Failed to fetch cafedagen')
   }
-})
+}
 
 // GET all cafes
-export const getCafes = cache(async () => {
+export async function getCafes() {
   try {
     const cafes = await prisma.cafe.findMany({
       orderBy: {
@@ -32,4 +31,4 @@ export const getCafes = cache(async () => {
     console.error('Error fetching cafes:', error)
     throw new Error('Failed to fetch cafes')
   }
-})
+}

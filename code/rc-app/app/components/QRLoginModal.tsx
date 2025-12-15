@@ -44,40 +44,44 @@ export default function QRLoginModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            QR Login voor {userName}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-          >
-            ×
-          </button>
-        </div>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      tabIndex={-1}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="qr-modal-title"
+        aria-describedby="qr-modal-desc"
+        className="w-[547px] rounded-2xl bg-[#ED532A] p-8 flex flex-col gap-2.5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="qr-modal-title" className="text-white font-inter text-xl font-bold leading-[30px] tracking-[-0.4px]">
+          QR Login voor {userName}
+        </h2>
 
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center mt-2">
           <div className="bg-white p-4 rounded-lg mb-4">
             <canvas ref={canvasRef} />
           </div>
-          
-          <p className="text-sm text-gray-600 text-center mb-2">
+
+          <p className="text-white font-inter text-base font-normal leading-[22px] tracking-[-0.32px] text-center mb-2">
             Scan deze QR code om in te loggen
           </p>
-          
-          <p className="text-xs text-gray-500 text-center">
+
+          <p className="text-white font-inter text-sm font-normal leading-[18px] tracking-[-0.28px] text-center">
             Deze code is 5 minuten geldig
           </p>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className="flex items-center gap-4 mt-6 px-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+            className="flex-1 h-12 px-4 py-3 flex items-center justify-center rounded-md bg-[#EEF1F4] cursor-pointer hover:bg-[#dde1e4]"
           >
-            Sluiten
+            <span className="text-[#545F71] font-inter text-base font-semibold leading-[22px] tracking-[-0.32px]">Sluiten</span>
           </button>
         </div>
       </div>

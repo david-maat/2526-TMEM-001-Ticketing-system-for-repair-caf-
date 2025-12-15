@@ -11,7 +11,9 @@ import {
     updateCafedag,
     deleteCafedag,
     createCafe,
+    updateCafe,
 } from '@/lib/actions/cafedagen';
+import { Plus } from '@deemlol/next-icons';
 
 interface Cafedag {
     cafedagId: number;
@@ -33,8 +35,8 @@ interface CafeDagenClientProps {
 interface TableRow {
     cafedagId: number;
     cafeId: number;
-    startDate: string;
-    endDate: string;
+    startDate: Date;
+    endDate: Date;
     location: string;
     name: string;
 }
@@ -57,8 +59,8 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
     const tableData: TableRow[] = cafedagen.map((cafedag) => ({
         cafedagId: cafedag.cafedagId,
         cafeId: cafedag.cafeId,
-        startDate: new Date(cafedag.startDatum).toLocaleDateString('nl-NL'),
-        endDate: new Date(cafedag.eindDatum).toLocaleDateString('nl-NL'),
+        startDate: cafedag.startDatum,
+        endDate: cafedag.eindDatum,
         location: cafedag.cafe.locatie,
         name: cafedag.cafe.naam,
     }));
@@ -85,19 +87,31 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
         setShowDeleteModal(true);
     };
 
-    const confirmEdit = async (data: { startDate: string; endDate: string; location: string; name: string }) => {
+    const confirmEdit = async (data: { startDate: Date; endDate: Date; location: string; name: string }) => {
         if (selectedItem) {
-            // Update existing cafedag
-            const result = await updateCafedag(selectedItem.cafedagId, {
-                startDatum: new Date(data.startDate),
-                eindDatum: new Date(data.endDate),
+            // Update existing cafedag and cafe
+            const cafedagResult = await updateCafedag(selectedItem.cafedagId, {
+                startDatum: data.startDate,
+                eindDatum: data.endDate,
             });
 
-            if (result.success) {
-                setShowEditModal(false);
-                setSelectedItem(null);
+            if (cafedagResult.success) {
+                // Also update the cafe information
+                const cafeResult = await updateCafe(
+                    selectedItem.cafeId,
+                    data.name,
+                    data.location,
+                    'RC-{yyyy}-{mm}-{dd}'
+                );
+
+                if (cafeResult.success) {
+                    setShowEditModal(false);
+                    setSelectedItem(null);
+                } else {
+                    alert('Fout bij het bijwerken van cafe: ' + cafeResult.error);
+                }
             } else {
-                alert('Fout bij het bijwerken: ' + result.error);
+                alert('Fout bij het bijwerken: ' + cafedagResult.error);
             }
         } else {
             // Create new cafe and cafedag
@@ -148,7 +162,7 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
                         />
                     </div>
                     <Button variant="primary" onClick={handleAdd}>
-                        +
+                        <Plus size={24} color="#FFFFFF" />
                     </Button>
                 </div>
 
