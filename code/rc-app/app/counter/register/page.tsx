@@ -55,7 +55,17 @@ export default function RegisterItemPage() {
     setIsLoading(true);
 
     try {
-      const result = await registerVoorwerp(formData);
+      // Trim input fields to avoid accidental whitespace-only values
+      const payload = {
+        ...formData,
+        customerName: formData.customerName.trim(),
+        customerPhone: formData.customerPhone?.trim() || '',
+        customerType: formData.customerType?.trim() || '',
+        problemDescription: formData.problemDescription.trim(),
+        itemDescription: formData.itemDescription.trim(),
+      }
+
+      const result = await registerVoorwerp(payload);
 
       if (!result.success) {
         setError(result.error || 'Er is een fout opgetreden');

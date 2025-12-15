@@ -95,19 +95,24 @@ export async function registerVoorwerp(data: RegisterVoorwerpInput) {
       return { success: false, error: 'Verplichte velden ontbreken' }
     }
 
-    // Find or create customer
-    let klant = await prisma.klant.findFirst({
-      where: {
-        klantnaam: data.customerName,
-        telNummer: data.customerPhone || null,
-      },
-    })
+    // Normalize inputs
+    const customerName = data.customerName.trim()
+    const customerPhone = data.customerPhone ? data.customerPhone.trim() : ''
+
+    // Find or create customer (try phone match first, then name match)
+    let klant = null
+
+    if (customerPhone) {
+      klant = await prisma.klant.findFirst({ where: { telNummer: customerPhone } })
+    }
+
+    if (!klant) {
+      klant = await prisma.klant.findFirst({ where: { klantnaam: { equals: customerName, mode: 'insensitive' } } })
+    }
 
     if (!klant) {
       // Find customer type
-      const klantType = await prisma.klantType.findFirst({
-        where: { naam: data.customerType },
-      })
+      const klantType = await prisma.klantType.findFirst({ where: { naam: data.customerType } })
 
       if (!klantType) {
         return { success: false, error: 'Klanttype niet gevonden' }
@@ -116,11 +121,17 @@ export async function registerVoorwerp(data: RegisterVoorwerpInput) {
       // Create new customer
       klant = await prisma.klant.create({
         data: {
-          klantnaam: data.customerName,
-          telNummer: data.customerPhone || null,
+          klantnaam: customerName,
+          telNummer: customerPhone || null,
           klantTypeId: klantType.klantTypeId,
         },
       })
+    }
+
+    // Defensive check: ensure we have a valid customer record
+    if (!klant || !klant.klantId) {
+      console.error('registerVoorwerp: klant lookup/create returned no customer', { customerName, customerPhone, klant })
+      return { success: false, error: 'Klant kon niet worden aangemaakt of gevonden' }
     }
 
     // Generate unique 4-character tracking number (0-9 and A-Z)
