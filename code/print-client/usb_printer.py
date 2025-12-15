@@ -5,7 +5,7 @@ Handles low-level printer communication via USB using python-escpos or Win32 pri
 
 import logging
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from printer_base import BasePrinter, PrinterCommunicationError
 
@@ -17,6 +17,14 @@ except ImportError:
     Usb = None
     USB_AVAILABLE = False
 
+# Try to import pyusb for device discovery
+try:
+    import usb.core
+    import usb.util
+    PYUSB_AVAILABLE = True
+except ImportError:
+    PYUSB_AVAILABLE = False
+
 # Try to import Windows printer support
 try:
     import win32print
@@ -26,6 +34,50 @@ except ImportError:
     WIN32_AVAILABLE = False
 
 logger = logging.getLogger('PrinterClient.USBPrinter')
+
+
+def auto_detect_usb_printer() -> Optional[Tuple[int, int, int, int, int]]:
+    """
+    Auto-detect USB printer by scanning for printer class devices
+    
+    Returns:
+        Tuple of (vendor_id, product_id, interface, in_ep, out_ep) or None if not found
+    """
+    if not PYUSB_AVAILABLE:
+        logger.warning('pyusb not available - cannot auto-detect USB printers')
+        return None
+    
+    logger.info('Scanning for USB printers...')
+    
+    # Find all USB devices
+    devices = usb.core.find(find_all=True)
+    
+    for device in devices:
+        try:
+            # Look for printer class devices (bInterfaceClass = 7)
+            for cfg in device:
+                for intf in cfg:
+                    if intf.bInterfaceClass == 7:  # Printer class
+                        logger.info(f'Found printer: VID:PID {hex(device.idVendor)}:{hex(device.idProduct)} - {usb.util.get_string(device, device.iProduct) if device.iProduct else "Unknown"}')
+                        
+                        # Find endpoints
+                        in_ep = None
+                        out_ep = None
+                        for ep in intf:
+                            if usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_IN:
+                                in_ep = ep.bEndpointAddress
+                            elif usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT:
+                                out_ep = ep.bEndpointAddress
+                        
+                        if in_ep and out_ep:
+                            logger.info(f'  Interface: {intf.bInterfaceNumber}, IN: {hex(in_ep)}, OUT: {hex(out_ep)}')
+                            return (device.idVendor, device.idProduct, intf.bInterfaceNumber, in_ep, out_ep)
+        except Exception as e:
+            logger.debug(f'Error inspecting device {device}: {e}')
+            continue
+    
+    logger.warning('No USB printer found')
+    return None
 
 
 class USBPrinter(BasePrinter):
@@ -39,8 +91,8 @@ class USBPrinter(BasePrinter):
         
         Args:
             printer_name: Windows printer name (preferred on Windows, e.g., "POS-80C")
-            vendor_id: USB vendor ID (default: 0x0519 for POS-80C)
-            product_id: USB product ID (default: 0x0003 for POS-80C)
+            vendor_id: USB vendor ID (0 for auto-detect)
+            product_id: USB product ID (0 for auto-detect)
             interface: USB interface number (default: 0)
             in_ep: USB input endpoint (default: 0x81)
             out_ep: USB output endpoint (default: 0x03)
@@ -59,7 +111,19 @@ class USBPrinter(BasePrinter):
             self.use_win32 = True
             logger.info(f'Using Windows printer: {printer_name}')
         elif USB_AVAILABLE:
-            logger.info(f'Using USB printer with VID:PID {hex(vendor_id)}:{hex(product_id)}')
+            # Auto-detect if vendor_id is 0
+            if vendor_id == 0:
+                logger.info('Auto-detecting USB printer...')
+                detected = auto_detect_usb_printer()
+                if detected:
+                    self.vendor_id, self.product_id, self.interface, self.in_ep, self.out_ep = detected
+                    logger.info(f'Auto-detected USB printer: VID:PID {hex(self.vendor_id)}:{hex(self.product_id)}')
+                else:
+                    error_msg = 'No USB printer found. Please connect a printer or specify VID/PID manually.'
+                    logger.error(error_msg)
+                    raise PrinterCommunicationError(error_msg)
+            
+            logger.info(f'Using USB printer with VID:PID {hex(self.vendor_id)}:{hex(self.product_id)}')
         else:
             error_msg = (
                 "No USB backend available. On Windows, either:\n"

@@ -11,6 +11,9 @@ timezone: Europe/Brussels
 # Manage /etc/hosts
 manage_etc_hosts: true
 
+# Allow SSH password authentication
+ssh_pwauth: true
+
 # Users configuration
 users:
   - name: pi
@@ -36,6 +39,7 @@ packages:
   - cups
   - libcups2-dev
   - git
+  - openssh-server
 
 # Write files to disk
 write_files:
@@ -96,6 +100,10 @@ runcmd:
   - systemctl enable print-client.service
   - systemctl start print-client.service
 
+  # Ensure SSH is enabled and running (allow password login)
+  - systemctl enable ssh
+  - systemctl start ssh
+
 # Final message
 final_message: |
   Repair Café Print Client is now configured and running!
@@ -104,6 +112,7 @@ final_message: |
   - Hostname: printclient
   - Default User: pi
   - Default Password: raspberry
+  - SSH: enabled (password authentication allowed)
 
   Service Status:
   - Run 'sudo systemctl status print-client' to check the service

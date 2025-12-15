@@ -4,4 +4,4 @@ requests>=2.31.0
 qrcode>=7.4.2
 Pillow>=10.0.0
 python-escpos>=3.0.0
-pywin32>=306
+pyusb>=1.2.1
