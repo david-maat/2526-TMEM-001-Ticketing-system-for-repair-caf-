@@ -102,9 +102,18 @@ export default function GebruikerEditModal({
       onConfirm={handleConfirm}
       onCancel={onCancel}
     >
+      <div className="flex flex-col gap-0.5">
+        <Dropdown
+          options={typeOptions}
+          placeholder="Type"
+          value={type}
+          onChange={setType}
+          disabled={isEditing}
+        />
+      </div>
       <Input
         label="Naam"
-        placeholder="Ruben Maat"
+        placeholder=""
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -112,7 +121,7 @@ export default function GebruikerEditModal({
       {type.toLowerCase() === 'student' ? (
         <Input
           label="Studentnummer"
-          placeholder="r0123456"
+          placeholder=""
           required
           value={studentNumber}
           onChange={(e) => setStudentNumber(e.target.value)}
@@ -120,7 +129,7 @@ export default function GebruikerEditModal({
       ) : (
         <Input
           label="Gebruikersnaam"
-          placeholder="johndoe"
+          placeholder=""
           required
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -144,15 +153,6 @@ export default function GebruikerEditModal({
           />
         </>
       )}
-      <div className="flex flex-col gap-0.5">
-        <Dropdown
-          options={typeOptions}
-          placeholder="Type"
-          value={type}
-          onChange={setType}
-          disabled={isEditing}
-        />
-      </div>
     </EditModal>
   );
 }
