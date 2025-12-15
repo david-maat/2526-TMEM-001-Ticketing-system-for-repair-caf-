@@ -10,6 +10,8 @@ import GebruikerEditModal from '../../components/modals/GebruikerEditModal';
 import { generateQRLoginToken } from '@/lib/actions/gebruikers';
 import type { GebruikerWithType } from '@/lib/types';
 import { getGebruikerTypeIdFromKey, getKeyFromDbName } from '@/lib/constants/gebruikers';
+import { Plus } from '@deemlol/next-icons';
+
 
 interface TableRow {
   id: number;
@@ -48,6 +50,17 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
     username: gebruiker.gebruikerType.typeNaam === 'Student' ? 'N.v.t' : gebruiker.gebruikerNaam,
     studentNumber: gebruiker.studentNummer || 'N.v.t'
   }));
+
+  // Apply search filter
+  const filteredData = data.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (item.name || '').toLowerCase().includes(term) ||
+      (item.username || '').toLowerCase().includes(term) ||
+      (item.type || '').toLowerCase().includes(term) ||
+      (item.studentNumber || '').toLowerCase().includes(term)
+    );
+  });
 
   const handleEdit = (item: TableRow) => {
     setSelectedItem(item);
@@ -186,7 +199,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
       {/* Content */}
       <div className="flex flex-col gap-2.5 px-2.5 lg:px-24">
         {/* Search and Add */}
-        <div className="flex flex-col lg:flex-row items-start gap-2.5">
+        <div className="flex flex-row items-end gap-2.5">
           <div className="flex-1 w-full">
             <Input
               label="Zoeken"
@@ -195,8 +208,8 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="primary" onClick={handleAdd}>
-            +
+          <Button variant="primary" className="h-12" onClick={handleAdd}>
+            <Plus size={24} color="#FFFFFF" />
           </Button>
         </div>
 
@@ -204,7 +217,7 @@ export default function GebruikersClient({ gebruikers }: GebruikersClientProps) 
         <div className="py-2.5">
           <Table
             columns={columns}
-            data={data}
+            data={filteredData}
             onEdit={handleEdit}
             onDelete={handleDelete}
             renderCell={renderCell}

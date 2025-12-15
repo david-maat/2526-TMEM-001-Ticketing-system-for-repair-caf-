@@ -26,6 +26,7 @@ export default function Dropdown({
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value || '');
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
 
   // Sync internal state with value prop when it changes
   useEffect(() => {
@@ -37,6 +38,23 @@ export default function Dropdown({
       setIsOpen(false);
     }
   }, [disabled]);
+
+  // Close the dropdown when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutside = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+    };
+  }, [isOpen]);
 
   const handleSelect = (optionValue: string) => {
     if (disabled) return;
@@ -50,7 +68,7 @@ export default function Dropdown({
   const selectedLabel = options.find(opt => opt.value === selectedValue)?.label || placeholder;
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       <button
         type="button"
         disabled={disabled}

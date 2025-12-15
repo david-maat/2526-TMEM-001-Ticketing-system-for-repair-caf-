@@ -152,7 +152,7 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
             {/* Content */}
             <div className="flex flex-col gap-2.5 px-2.5 lg:px-24">
                 {/* Search and Add */}
-                <div className="flex flex-col lg:flex-row items-start gap-2.5">
+                <div className="flex flex-row items-end gap-2.5">
                     <div className="flex-1 w-full">
                         <Input
                             label="Zoeken"
@@ -161,7 +161,7 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="primary" onClick={handleAdd}>
+                    <Button variant="primary" className="h-12" onClick={handleAdd}>
                         <Plus size={24} color="#FFFFFF" />
                     </Button>
                 </div>
