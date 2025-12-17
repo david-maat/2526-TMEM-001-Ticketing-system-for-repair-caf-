@@ -78,8 +78,14 @@ if ($missingVars.Count -gt 0) {
 }
 
 # Set default values for optional variables
+if (-not $envVars.ContainsKey('CONNECTION_TYPE')) { $envVars['CONNECTION_TYPE'] = 'network' }
 if (-not $envVars.ContainsKey('PRINTER_IP')) { $envVars['PRINTER_IP'] = '' }
 if (-not $envVars.ContainsKey('PRINTER_PORT')) { $envVars['PRINTER_PORT'] = '9100' }
+if (-not $envVars.ContainsKey('USB_VENDOR_ID')) { $envVars['USB_VENDOR_ID'] = '0x0' }
+if (-not $envVars.ContainsKey('USB_PRODUCT_ID')) { $envVars['USB_PRODUCT_ID'] = '0x0' }
+if (-not $envVars.ContainsKey('USB_INTERFACE')) { $envVars['USB_INTERFACE'] = '0' }
+if (-not $envVars.ContainsKey('USB_IN_EP')) { $envVars['USB_IN_EP'] = '0x81' }
+if (-not $envVars.ContainsKey('USB_OUT_EP')) { $envVars['USB_OUT_EP'] = '0x03' }
 
 Write-Host ""
 Write-Host "Processing cloud-init templates..." -ForegroundColor Yellow
