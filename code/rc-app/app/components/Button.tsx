@@ -17,7 +17,7 @@ export default function Button({
   className = '',
   disabled = false
 }: ButtonProps) {
-  const baseStyles = 'px-5 py-1.5 rounded-md font-open-sans text-2xl font-normal transition-all cursor-pointer';
+  const baseStyles = 'px-5 py-1.5 rounded-md font-open-sans text-md font-normal transition-all cursor-pointer';
   
   const variantStyles = {
     default: 'bg-transparent text-black',

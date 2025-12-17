@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QrReader } from 'react-qr-reader';
 import Button from './Button';
 
@@ -13,14 +13,20 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const [error, setError] = useState<string>('');
   const [hasScanned, setHasScanned] = useState<boolean>(false);
   const [permissionStatus, setPermissionStatus] = useState<'prompt' | 'granted' | 'denied' | 'checking'>('checking');
+  const isMountedRef = useRef(true);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Check and request camera permission
   useEffect(() => {
+    isMountedRef.current = true;
+    
     const checkPermission = async () => {
       // Check if mediaDevices API is available
       if (!navigator.mediaDevices?.getUserMedia) {
-        setPermissionStatus('denied');
-        setError('Camera API niet beschikbaar. Gebruik HTTPS of localhost.');
+        if (isMountedRef.current) {
+          setPermissionStatus('denied');
+          setError('Camera API niet beschikbaar. Gebruik HTTPS of localhost.');
+        }
         return;
       }
 
@@ -30,16 +36,20 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
           video: { facingMode: 'environment' } 
         });
         
-        // Permission granted, stop the stream as QrReader will create its own
-        for (const track of stream.getTracks()) {
-          track.stop();
+        if (!isMountedRef.current) {
+          // Component unmounted, clean up
+          stream.getTracks().forEach(track => track.stop());
+          return;
         }
+        
+        // Permission granted, stop the stream as QrReader will create its own
+        stream.getTracks().forEach(track => track.stop());
         
         setPermissionStatus('granted');
         setError('');
       } catch (err) {
         console.error('Camera permission error:', err);
-        if (err instanceof Error) {
+        if (isMountedRef.current && err instanceof Error) {
           if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
             setPermissionStatus('denied');
             setError('Cameratoegang geweigerd. Geef toestemming om QR codes te scannen.');
@@ -55,16 +65,24 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
     };
 
     checkPermission();
+    
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const handleScan = (result: any) => {
     console.log('handleScan called, result:', result?.text, 'hasScanned:', hasScanned);
-    if (result && !hasScanned) {
+    if (result && !hasScanned && isMountedRef.current) {
       // Prevent multiple scans
       console.log('Processing scan...');
       setHasScanned(true);
-      // Call onScan and let parent component handle closing
-      onScan(result.text);
+      // Small delay to prevent race conditions
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          onScan(result.text);
+        }
+      }, 100);
     }
   };
 
@@ -115,13 +133,31 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
       if (videoElement?.srcObject) {
         const stream = videoElement.srcObject as MediaStream;
         const tracks = stream.getTracks();
-        for (const track of tracks) {
-          if (track.readyState === 'live') {
-            track.stop();
-            console.log('Stopped track:', track.kind);
+        tracks.forEach(track => {
+          try {
+            if (track.readyState === 'live') {
+              track.stop();
+              console.log('Stopped track:', track.kind);
+            }
+          } catch (err) {
+            console.error('Error stopping individual track:', err);
           }
-        }
+        });
         videoElement.srcObject = null;
+      }
+      
+      // Also clean up stored stream if any
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          try {
+            if (track.readyState === 'live') {
+              track.stop();
+            }
+          } catch (err) {
+            console.error('Error stopping stored track:', err);
+          }
+        });
+        streamRef.current = null;
       }
     } catch (err) {
       console.error('Error stopping camera:', err);
@@ -129,12 +165,15 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   };
 
   const handleClose = () => {
+    isMountedRef.current = false;
+    stopCamera();
     onClose();
   };
 
   useEffect(() => {
     // Cleanup on unmount
     return () => {
+      isMountedRef.current = false;
       stopCamera();
     };
   }, []);

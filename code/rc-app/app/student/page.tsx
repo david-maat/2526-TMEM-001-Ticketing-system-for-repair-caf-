@@ -14,14 +14,23 @@ export default function StudentPage() {
   const router = useRouter();
 
   const handleScanQR = () => {
+    setError('');
     setShowQRScanner(true);
   };
 
   const handleQRScan = (data: string) => {
     console.log('QR code scanned:', data);
     setShowQRScanner(false);
+    
+    // Validate the scanned data
+    const trimmedData = data.trim();
+    if (!trimmedData) {
+      setError('Ongeldige QR code gescand');
+      return;
+    }
+    
     // Navigate to the scanned tracking number
-    router.push(`/student/handle/${data}`);
+    router.push(`/student/handle/${trimmedData}`);
   };
 
   const handleCloseQRScanner = () => {
@@ -30,6 +39,7 @@ export default function StudentPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (!trackingNumber.trim()) {
       setError('Vul een volgnummer in');
@@ -66,16 +76,18 @@ export default function StudentPage() {
 
         {/* Manual Input */}
         <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-2.5">
+          {error && (
+            <div className="w-full bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded text-center mb-2">
+              {error}
+            </div>
+          )}
           <Input
             label="Volgnummer"
             placeholder="H78K"
             required
             value={trackingNumber}
-            onChange={(e) => setTrackingNumber(e.target.value)}
+            onChange={(e) => { setTrackingNumber(e.target.value); setError(''); }}
           />
-          {error && (
-            <div className="text-red-500 text-sm mt-2">{error}</div>
-          )}
           <Button variant="primary" type="submit" className="mt-2">
             Voorwerp behandelen
           </Button>

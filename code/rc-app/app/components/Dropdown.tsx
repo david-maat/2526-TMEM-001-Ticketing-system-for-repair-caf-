@@ -76,7 +76,7 @@ export default function Dropdown({
           if (disabled) return;
           setIsOpen(!isOpen);
         }}
-        className={`flex items-center justify-between gap-0.5 w-full px-3.5 py-2 rounded-md ${isOpen ? 'rounded-b-none' : ''} bg-white text-black font-open-sans text-2xl font-normal ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'}`}
+        className={`flex items-center justify-between gap-0.5 w-full px-3.5 py-2 rounded-md ${isOpen ? 'rounded-b-none' : ''} bg-white text-black font-open-sans text-md font-normal ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'}`}
       >
         <span>{selectedLabel}</span>
         <svg
@@ -98,7 +98,7 @@ export default function Dropdown({
             <div
               key={option.value}
               onClick={() => handleSelect(option.value)}
-              className="px-1.5 py-0.5 cursor-pointer hover:bg-gray-100 text-black font-open-sans text-2xl"
+              className="px-1.5 py-0.5 cursor-pointer hover:bg-gray-100 text-black font-open-sans text-md"
             >
               {option.label}
             </div>

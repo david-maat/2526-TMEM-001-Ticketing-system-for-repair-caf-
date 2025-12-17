@@ -70,7 +70,7 @@ export default function DeliverItemPage() {
             />
           </div>
 
-          <Button variant="primary" type="submit" className="px-8 py-8 text-4xl" disabled={isLoading}>
+          <Button variant="primary" type="submit" className="px-8 py-4 text-2xl" disabled={isLoading}>
             {isLoading ? 'Bezig...' : 'Voorwerp uitleveren'}
           </Button>
         </form>

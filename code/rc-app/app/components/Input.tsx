@@ -27,7 +27,7 @@ export default function Input({
   className = '',
   disabled = false
 }: InputProps) {
-  const inputClasses = 'w-full px-3.5 py-2 rounded-md bg-white text-black font-open-sans text-2xl font-normal placeholder:text-black/50 border-none focus:outline-none focus:ring-2 focus:ring-[#ED5028]';
+  const inputClasses = 'w-full px-3.5 py-2 rounded-md bg-white text-black font-open-sans text-md font-normal placeholder:text-black/50 border-none focus:outline-none focus:ring-2 focus:ring-[#ED5028]';
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>

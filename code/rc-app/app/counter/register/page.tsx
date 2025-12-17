@@ -182,7 +182,7 @@ export default function RegisterItemPage() {
 
         {/* Submit Button */}
         <div className="flex justify-center p-2.5">
-          <Button variant="primary" type="submit" className="w-full lg:w-[572px] py-12 text-4xl" disabled={isLoading}>
+          <Button variant="primary" type="submit" className="w-full lg:w-[572px] px-8 py-4 text-2xl" disabled={isLoading}>
             {isLoading ? 'Bezig met registreren...' : 'Voorwerp Registreren'}
           </Button>
         </div>

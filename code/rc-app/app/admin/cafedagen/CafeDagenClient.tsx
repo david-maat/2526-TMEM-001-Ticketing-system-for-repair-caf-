@@ -156,12 +156,12 @@ export default function CafeDagenClient({ cafedagen }: CafeDagenClientProps) {
                     <div className="flex-1 w-full">
                         <Input
                             label="Zoeken"
-                            placeholder="Repaircafe 2025"
+                            placeholder=""
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="primary" className="h-12" onClick={handleAdd}>
+                    <Button variant="primary" className="h-10" onClick={handleAdd}>
                         <Plus size={24} color="#FFFFFF" />
                     </Button>
                 </div>

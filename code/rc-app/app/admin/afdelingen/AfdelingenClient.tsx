@@ -90,12 +90,12 @@ export default function AfdelingenClient({ afdelingen }: AfdelingenClientProps) 
                     <div className="flex-1 w-full">
                         <Input
                             label="Zoeken"
-                            placeholder="Elektronica"
+                            placeholder=""
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="primary" className="h-12" onClick={handleAdd}>
+                    <Button variant="primary" className="h-10" onClick={handleAdd}>
                         <Plus size={24} color="#FFFFFF" />
                     </Button>
                 </div>

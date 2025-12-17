@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [scanCooldown, setScanCooldown] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +55,16 @@ export default function LoginPage() {
 
   const handleQRScan = async (data: string) => {
     console.log('QR Scan received:', data);
+    
+    // Prevent multiple simultaneous scans
+    if (isLoading || scanCooldown) {
+      console.log('Already processing a scan or in cooldown, ignoring...');
+      return;
+    }
+    
     setError('');
     setIsLoading(true);
+    setScanCooldown(true);
     setShowQRScanner(false); // Close the scanner immediately
 
     try {
@@ -65,6 +74,8 @@ export default function LoginPage() {
       if (!token) {
         setError('Ongeldige QR code');
         setIsLoading(false);
+        // Reset cooldown after a delay
+        setTimeout(() => setScanCooldown(false), 1000);
         return;
       }
 
@@ -74,6 +85,8 @@ export default function LoginPage() {
       if (!result.success) {
         setError(result.error || 'Inloggen mislukt');
         setIsLoading(false);
+        // Reset cooldown after a delay
+        setTimeout(() => setScanCooldown(false), 1000);
         return;
       }
 
@@ -100,6 +113,8 @@ export default function LoginPage() {
       setShowQRScanner(false);
       setError('Er is een fout opgetreden. Probeer het opnieuw.');
       setIsLoading(false);
+      // Reset cooldown after a delay
+      setTimeout(() => setScanCooldown(false), 1000);
     }
   };
 
@@ -159,7 +174,18 @@ export default function LoginPage() {
               fill="white"
             />
           </svg>
-          <Button variant="primary" onClick={() => setShowQRScanner(true)}>Scan QR</Button>
+          <Button 
+            variant="primary" 
+            onClick={() => {
+              if (!isLoading && !scanCooldown) {
+                setError('');
+                setShowQRScanner(true);
+              }
+            }}
+            disabled={isLoading || scanCooldown}
+          >
+            {isLoading ? 'Bezig...' : 'Scan QR'}
+          </Button>
         </div>
 
         {/* QR Scanner Modal */}
@@ -170,14 +196,15 @@ export default function LoginPage() {
           />
         )}
 
+        {/* Error Message - Visible for both mobile and desktop */}
+        {error && (
+          <div className="w-full max-w-[283px] bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded text-center">
+            {error}
+          </div>
+        )}
+
         {/* Desktop: Login Form */}
         <form onSubmit={handleSubmit} className="hidden lg:flex w-full max-w-[283px] flex-col items-center gap-9">
-          {/* Error Message */}
-          {error && (
-            <div className="w-full bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
 
           {/* Login Fields */}
           <div className="w-full flex flex-col gap-2.5">

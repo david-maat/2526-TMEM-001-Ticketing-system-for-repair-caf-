@@ -1,6 +1,7 @@
 import { getMaterialen } from '@/lib/data/materialen';
 import { getVoorwerpByVolgnummer } from '@/lib/data/voorwerpen';
 import MaterialenSelectieClient from './MaterialenSelectieClient';
+import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 interface PageProps {
   readonly params: Promise<{ volgnummer: string }>;
@@ -13,10 +14,12 @@ export default async function MaterialenSelectiePage({ params }: PageProps) {
   const gebruikteMaterialen = voorwerp?.gebruikteMaterialen ?? [];
 
   return (
-    <MaterialenSelectieClient
-      materialen={materialen}
-      volgnummer={volgnummer}
-      gebruikteMaterialen={gebruikteMaterialen}
-    />
+    <ProtectedRoute allowedRoles={['Admin', 'Student']}>
+      <MaterialenSelectieClient
+        materialen={materialen}
+        volgnummer={volgnummer}
+        gebruikteMaterialen={gebruikteMaterialen}
+      />
+    </ProtectedRoute>
   );
 }

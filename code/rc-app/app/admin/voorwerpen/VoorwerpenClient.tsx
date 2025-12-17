@@ -116,19 +116,19 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
         }
     };
 
-    const confirmDelete = async () => {
-        if (selectedItem) {
-            // Import delete function dynamically
-            const { deleteVoorwerp } = await import('@/lib/actions/voorwerpen');
-            const result = await deleteVoorwerp(selectedItem.volgnummer);
-            if (result.success) {
-                setShowDeleteModal(false);
-                setSelectedItem(null);
-            } else {
-                alert('Fout bij het verwijderen: ' + result.error);
-            }
-        }
-    };
+    // const confirmDelete = async () => {
+    //     if (selectedItem) {
+    //         // Import delete function dynamically
+    //         const { deleteVoorwerp } = await import('@/lib/actions/voorwerpen');
+    //         const result = await deleteVoorwerp(selectedItem.volgnummer);
+    //         if (result.success) {
+    //             setShowDeleteModal(false);
+    //             setSelectedItem(null);
+    //         } else {
+    //             alert('Fout bij het verwijderen: ' + result.error);
+    //         }
+    //     }
+    // };
 
     return (
         <>
@@ -152,7 +152,6 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
                         columns={columns}
                         data={filteredData}
                         onEdit={handleEdit}
-                        onDelete={handleDelete}
                         renderCell={renderCell}
                         />
                 </div>
@@ -183,7 +182,8 @@ export default function VoorwerpenClient({ voorwerpen, afdelingen, statuses }: V
                 isOpen={showDeleteModal}
                 title="Ben je zeker?"
                 description="Dit is onomkeerbaar"
-                onConfirm={confirmDelete}
+                onConfirm={() => {}}
+                // onConfirm={confirmDelete}
                 onCancel={() => setShowDeleteModal(false)}
             />
         </>
